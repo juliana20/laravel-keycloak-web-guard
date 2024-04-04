@@ -628,22 +628,22 @@ class KeycloakService
 
         $url = $this->getOpenIdValue('introspection_endpoint');
         
-        // Validate JWT Token
-        $token = new KeycloakAccessToken($credentials);
-        if (empty($token->getAccessToken())) {
-            throw new Exception('Access Token is invalid.');
-        }
+        // // Validate JWT Token
+        // $token = new KeycloakAccessToken($credentials);
+        // if (empty($token->getAccessToken())) {
+        //     throw new Exception('Access Token is invalid.');
+        // }
 
-        $claims = array(
-            'aud' => $this->getClientId(),
-            'iss' => $this->getOpenIdValue('issuer'),
-        );
+        // $claims = array(
+        //     'aud' => $this->getClientId(),
+        //     'iss' => $this->getOpenIdValue('issuer'),
+        // );
 
-        $token->validateIdToken($claims);
+        // $token->validateIdToken($claims);
 
         $params = [
             'client_id' => $this->getClientId(),
-            'token' => $token->getAccessToken(),
+            'token' => $credentials['access_token'],
         ];
         if (! empty($this->clientSecret)) {
             $params['client_secret'] = $this->clientSecret;
