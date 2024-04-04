@@ -1,36 +1,29 @@
 {
-    "name": "vizir/laravel-keycloak-web-guard",
-    "description": "Simple Keycloak Guard to Laravel Web Routes",
-    "homepage": "https://github.com/Vizir/laravel-keycloak-web-guard",
+    "name": "julidev/laravel-sso-keycloak",
+    "description": "This packages allow you authenticate users with Keycloak Server.",
+    "type": "library",
     "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Julidev\\LaravelSsoKeycloak\\": "src/"
+        }
+    },
     "keywords": [
         "laravel",
         "keycloak",
         "jwt",
-        "authentication"
+        "authentication",
+        "sso"
     ],
-    "authors": [
-        {
-            "name": "Mário Valney",
-            "email": "mariovalney@gmail.com"
-        }
-    ],
-    "minimum-stability": "dev",
-    "require": {
-        "guzzlehttp/guzzle": "^6.5|^7.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "Vizir\\KeycloakWebGuard\\": "src/"
-        }
-    },
+    "minimum-stability": "stable",
+    "require": {},
     "extra": {
         "laravel": {
             "providers": [
-                "Vizir\\KeycloakWebGuard\\KeycloakWebGuardServiceProvider"
+                "Julidev\\LaravelSsoKeycloak\\SsoWebGuardServiceProvider"
             ],
             "aliases": {
-                "KeycloakWeb": "Vizir\\KeycloakWebGuard\\Facades\\KeycloakWeb"
+                "KeycloakWeb": "Julidev\\LaravelSsoKeycloak\\Facades\\KeycloakWeb"
             }
         }
     }

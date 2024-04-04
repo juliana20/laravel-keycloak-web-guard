@@ -1,10 +1,10 @@
 <?php
 
-namespace Vizir\KeycloakWebGuard\Auth;
+namespace Julidev\LaravelSsoKeycloak\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
-use Vizir\KeycloakWebGuard\Models\KeycloakUser;
+use Julidev\LaravelSsoKeycloak\Models\KeycloakUser;
 
 class KeycloakWebUserProvider implements UserProvider
 {

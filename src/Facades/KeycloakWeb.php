@@ -1,6 +1,6 @@
 <?php
 
-namespace Vizir\KeycloakWebGuard\Facades;
+namespace Julidev\LaravelSsoKeycloak\Facades;
 
 use Illuminate\Support\Facades\Facade;
 

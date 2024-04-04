@@ -1,6 +1,6 @@
 <?php
 
-namespace Vizir\KeycloakWebGuard\Services;
+namespace Julidev\LaravelSsoKeycloak\Services;
 
 use Exception;
 use GuzzleHttp\ClientInterface;
@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use Vizir\KeycloakWebGuard\Auth\KeycloakAccessToken;
-use Vizir\KeycloakWebGuard\Auth\Guard\KeycloakWebGuard;
+use Julidev\LaravelSsoKeycloak\Auth\KeycloakAccessToken;
+use Julidev\LaravelSsoKeycloak\Exceptions\KeycloakCallbackException;
+use Julidev\LaravelSsoKeycloak\Auth\Guard\KeycloakWebGuard;
+use Illuminate\Support\Facades\Auth;
 
 class KeycloakService
 {
@@ -370,6 +372,9 @@ class KeycloakService
     {
         session()->put(self::KEYCLOAK_SESSION, $credentials);
         session()->save();
+
+        // login sesi local aplikasi
+        $this->authenticationToken($credentials);
     }
 
     /**
@@ -414,52 +419,6 @@ class KeycloakService
     {
         session()->forget(self::KEYCLOAK_SESSION_STATE);
         session()->save();
-    }
-
-    /**
-     * Build a URL with params
-     *
-     * @param  string $url
-     * @param  array $params
-     * @return string
-     */
-    public function buildUrl($url, $params)
-    {
-        $parsedUrl = parse_url($url);
-        if (empty($parsedUrl['host'])) {
-            return trim($url, '?') . '?' . http_build_query($params);
-        }
-
-        if (! empty($parsedUrl['port'])) {
-            $parsedUrl['host'] .= ':' . $parsedUrl['port'];
-        }
-
-        $parsedUrl['scheme'] = (empty($parsedUrl['scheme'])) ? 'https' : $parsedUrl['scheme'];
-        $parsedUrl['path'] = (empty($parsedUrl['path'])) ? '' : $parsedUrl['path'];
-
-        $url = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
-        $query = [];
-
-        if (! empty($parsedUrl['query'])) {
-            $parsedUrl['query'] = explode('&', $parsedUrl['query']);
-
-            foreach ($parsedUrl['query'] as $value) {
-                $value = explode('=', $value);
-
-                if (count($value) < 2) {
-                    continue;
-                }
-
-                $key = array_shift($value);
-                $value = implode('=', $value);
-
-                $query[$key] = urldecode($value);
-            }
-        }
-
-        $query = array_merge($query, $params);
-
-        return $url . '?' . http_build_query($query);
     }
 
     /**
@@ -600,5 +559,161 @@ class KeycloakService
     protected function generateRandomState()
     {
         return bin2hex(random_bytes(16));
+    }
+
+    public function logoutToken()
+    {
+        $url = $this->getOpenIdValue('end_session_endpoint');
+        $credentials = $this->retrieveToken();
+
+        if(empty($credentials)){
+            return TRUE;
+        }
+
+        $introspection = $this->introspectionEndpoint($credentials);
+        if(!$introspection['active']){
+            return TRUE;
+        }
+    
+        $params = [
+            'client_id' => $this->getClientId(),
+            'refresh_token' => $credentials['refresh_token'],
+        ];
+        if (! empty($this->clientSecret)) {
+            $params['client_secret'] = $this->clientSecret;
+        }
+        
+        $response = [];
+        try {
+            
+            $this->forgetToken();
+            
+            $request = $this->httpClient->request('POST', $url, [
+                'form_params' => $params,
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+            ]);
+
+            if ($request->getStatusCode() === 200) {
+                $response = $request->getBody()->getContents();
+                $response = json_decode($response, true);
+            }
+            
+        } catch (GuzzleException $e) {
+            $this->logException($e);
+        }
+
+        return $response;
+    }
+    
+    protected function authenticationToken($credentials)
+    {
+        $user_sso = $this->getUserProfile($credentials);
+        if(!empty( $user_sso )){
+            // login to local sesi
+            $user = config('keycloak-web.database.users_model')::where('user_id_sso', $user_sso['sub'])->first();
+            if(empty($user)){
+                throw new KeycloakCallbackException('User SSO belum di mapping dengan user '.env('APP_NAME', 'Aplikasi'));
+            }
+
+            Auth::guard(config('keycloak-web.auth.guard'))->login($user, false);
+        }
+    }
+    public function introspectionEndpoint($credentials)
+    {
+        if(empty($credentials)){
+            return TRUE;
+        }
+
+        $url = $this->getOpenIdValue('introspection_endpoint');
+        
+        // Validate JWT Token
+        $token = new KeycloakAccessToken($credentials);
+        if (empty($token->getAccessToken())) {
+            throw new Exception('Access Token is invalid.');
+        }
+
+        $claims = array(
+            'aud' => $this->getClientId(),
+            'iss' => $this->getOpenIdValue('issuer'),
+        );
+
+        $token->validateIdToken($claims);
+
+        $params = [
+            'client_id' => $this->getClientId(),
+            'token' => $token->getAccessToken(),
+        ];
+        if (! empty($this->clientSecret)) {
+            $params['client_secret'] = $this->clientSecret;
+        }
+
+        $response = [];
+        try {
+            $request = $this->httpClient->request('POST', $url, [
+                'form_params' => $params,
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+            ]);
+
+            if ($request->getStatusCode() === 200) {
+                $response = $request->getBody()->getContents();
+                $response = json_decode($response, true);
+            }
+            
+        } catch (GuzzleException $e) {
+            $this->logException($e);
+        }
+
+        return $response;
+    }
+
+        /**
+     * Build a URL with params
+     *
+     * @param  string $url
+     * @param  array $params
+     * @return string
+     */
+   
+    public function buildUrl($url, $params)
+    {
+        $parsedUrl = parse_url($url);
+        if (empty($parsedUrl['host'])) {
+            return trim($url, '?') . '?' . http_build_query($params);
+        }
+
+        if (! empty($parsedUrl['port'])) {
+            $parsedUrl['host'] .= ':' . $parsedUrl['port'];
+        }
+
+        $parsedUrl['scheme'] = (empty($parsedUrl['scheme'])) ? 'https' : $parsedUrl['scheme'];
+        $parsedUrl['path'] = (empty($parsedUrl['path'])) ? '' : $parsedUrl['path'];
+
+        $url = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
+        $query = [];
+
+        if (! empty($parsedUrl['query'])) {
+            $parsedUrl['query'] = explode('&', $parsedUrl['query']);
+
+            foreach ($parsedUrl['query'] as $value) {
+                $value = explode('=', $value);
+
+                if (count($value) < 2) {
+                    continue;
+                }
+
+                $key = array_shift($value);
+                $value = implode('=', $value);
+
+                $query[$key] = urldecode($value);
+            }
+        }
+
+        $query = array_merge($query, $params);
+
+        return $url . '?' . http_build_query($query);
     }
 }

@@ -47,10 +47,9 @@ return [
     /**
      * Page to redirect after callback if there's no "intent"
      *
-     * @see Vizir\KeycloakWebGuard\Controllers\AuthController::callback()
+     * @see Julidev\LaravelSsoKeycloak\Controllers\AuthController::callback()
      */
-    'redirect_url' => '/admin',
-
+    'redirect_url' => env('KEYCLOAK_REDIRECT_AFTER_CALLBACK', '/admin'),
     /**
      * The routes for authenticate
      *
@@ -58,13 +57,13 @@ return [
      *
      * The routes will receive the name "keycloak.{route}" and login/callback are required.
      * So, if you make it false, you shoul register a named 'keycloak.login' route and extend
-     * the Vizir\KeycloakWebGuard\Controllers\AuthController controller.
+     * the Julidev\LaravelSsoKeycloak\Controllers\AuthController controller.
      */
     'routes' => [
-        'login' => 'login',
-        'logout' => 'logout',
-        'register' => 'register',
-        'callback' => 'callback',
+        'login' => 'sso/login',
+        'logout' => 'sso/logout',
+        'register' => 'sso/register',
+        'callback' => 'sso/callback',
     ],
 
     /**
@@ -72,5 +71,36 @@ return [
     *
     * @link http://docs.guzzlephp.org/en/stable/request-options.html
     */
-   'guzzle_options' => [],
+   'guzzle_options' => [
+        'verify' => false
+   ],
+
+   // Custom Guards for SSO
+   'auth' => [
+        'guard' => 'admin', // guard auth default local apps
+
+        'guards' => [
+            'iam' => [
+                'driver'    => 'keycloak-web',
+                'provider'  => 'users-iam',
+            ],
+        ],
+        'providers' => [
+            'users-iam' => [
+                'driver'    => 'keycloak-users',
+                'model'     => Julidev\LaravelSsoKeycloak\Models\KeycloakUser::class,
+            ],
+        ],
+    ],
+
+    // Custom Database for User SSO
+    'database' => [
+
+        // Database connection for following tables.
+        'connection' => '',
+
+        // User tables and model.
+        'users_table' => 'users',
+        'users_model' => App\User::class,
+    ]
 ];

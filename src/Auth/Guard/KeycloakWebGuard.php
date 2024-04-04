@@ -1,15 +1,15 @@
 <?php
 
-namespace Vizir\KeycloakWebGuard\Auth\Guard;
+namespace Julidev\LaravelSsoKeycloak\Auth\Guard;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Vizir\KeycloakWebGuard\Auth\KeycloakAccessToken;
-use Vizir\KeycloakWebGuard\Exceptions\KeycloakCallbackException;
-use Vizir\KeycloakWebGuard\Models\KeycloakUser;
-use Vizir\KeycloakWebGuard\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Auth\KeycloakAccessToken;
+use Julidev\LaravelSsoKeycloak\Exceptions\KeycloakCallbackException;
+use Julidev\LaravelSsoKeycloak\Models\KeycloakUser;
+use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
 use Illuminate\Contracts\Auth\UserProvider;
 
 class KeycloakWebGuard implements Guard
@@ -89,16 +89,6 @@ class KeycloakWebGuard implements Guard
     {
         $user = $this->user();
         return $user->id ?? null;
-    }
-    
-    /**
-    * Disable viaRemember methode used by some bundles (like filament)
-    *
-    * @return bool
-    */
-    public function viaRemember()
-    {
-        return false;
     }
 
     /**

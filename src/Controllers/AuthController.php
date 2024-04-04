@@ -1,12 +1,12 @@
 <?php
 
-namespace Vizir\KeycloakWebGuard\Controllers;
+namespace Julidev\LaravelSsoKeycloak\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Vizir\KeycloakWebGuard\Exceptions\KeycloakCallbackException;
-use Vizir\KeycloakWebGuard\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Exceptions\KeycloakCallbackException;
+use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
 
 class AuthController extends Controller
 {

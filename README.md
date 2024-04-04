@@ -1,13 +1,6 @@
-<p align="center">
-    <img src="https://img.shields.io/packagist/v/vizir/laravel-keycloak-web-guard.svg" />
-    <img src="https://img.shields.io/packagist/dt/vizir/laravel-keycloak-web-guard.svg" />
-</p>
-
-# [NEEDS A MAINTAINER] Keycloak Web Guard for Laravel
+# Keycloak Web Guard for Laravel
 
 This packages allow you authenticate users with [Keycloak Server](https://www.keycloak.org).
-
-It works on front. For APIs we recommend [laravel-keycloak-guard](https://github.com/robsontenorio/laravel-keycloak-guard).
 
 ## Requirements
 
@@ -18,8 +11,8 @@ It works on front. For APIs we recommend [laravel-keycloak-guard](https://github
 
 This package was tested with:
 
-* Laravel: 5.8 / 7 / 8 / 9
-* Keycloak: 18.0.0
+* Laravel Framework: 5.5 / 7 / 8 / 9 [Laravel Installation](https://laravel.com/)
+* Keycloak Server: 22.0.4 [Keycloak Server Version 22.0.4](https://www.keycloak.org/archive/downloads-22.0.4.html)
 
 Any other version is not guaranteed to work.
 
@@ -28,24 +21,24 @@ Any other version is not guaranteed to work.
 ## The flow
 
 1. User access a guarded route and is redirected to Keycloak login.
-1. User signin and obtains a code.
-1. He's redirected to callback page and we change the code for a access token.
-1. We store it on session and validate user.
-1. User is logged.
-1. We redirect the user to "redirect_url" route (see config) or the intended one.
+2. User signin and obtains a code.
+3. He's redirected to callback page and we change the code for a access token.
+4. We store it on session and validate user.
+5. User is logged.
+6. We redirect the user to "redirect_url" route (see config) or the intended one.
 
 ## Install
 
 Require the package
 
 ```
-composer require vizir/laravel-keycloak-web-guard
+composer require julidev/laravel-sso-keycloak
 ```
 
 If you want to change routes or the default values for Keycloak, publish the config file:
 
 ```
-php artisan vendor:publish  --provider="Vizir\KeycloakWebGuard\KeycloakWebGuardServiceProvider"
+php artisan vendor:publish  --provider="Julidev\LaravelSsoKeycloak\SsoWebGuardServiceProvider"
 
 ```
 
@@ -57,10 +50,10 @@ After publishing `config/keycloak-web.php` file, you can change the routes:
 'redirect_url' => '/admin',
 
 'routes' => [
-    'login' => 'login',
-    'logout' => 'logout',
-    'register' => 'register',
-    'callback' => 'callback',
+    'login' => 'sso/login',
+    'logout' => 'sso/logout',
+    'register' => 'sso/register',
+    'callback' => 'sso/callback',
 ]
 ```
 
@@ -70,7 +63,7 @@ Other configurations can be changed to have a new default value, but we recommen
 
 *  `KEYCLOAK_BASE_URL`
 
-The Keycloak Server url. Generally is something like: `https://your-domain.com/auth`.
+The Keycloak Server url. Generally is something like e.g: `http://localhost:8080/`.
 
 *  `KEYCLOAK_REALM`
 
@@ -80,19 +73,19 @@ The Keycloak realm. The default is `master`.
 
 The Keycloak Server realm public key (string).
 
-In dashboard go to: Keycloak >> Realm Settings >> Keys >> RS256 >> Public Key.
+In Keycloak dashboard go to: Keycloak >> Realm Settings >> Keys >> RS256 >> Public Key.
 
 *  `KEYCLOAK_CLIENT_ID`
 
 Keycloak Client ID.
 
-In dashboard go to: Keycloak >> Clients >> Installation.
+In Keycloak dashboard go to: Keycloak >> Clients >> Setting.
 
 *  `KEYCLOAK_CLIENT_SECRET`
 
 Keycloak Client Secret. If empty we'll not send it to Token Endpoint.
 
-In dashboard go to: Keycloak >> Clients >> Installation.
+In dashboard go to: Keycloak >> Clients >> Setting.
 
 *  `KEYCLOAK_CACHE_OPENID`
 
@@ -104,34 +97,46 @@ Just add the options you would like as an array to the" to "Just add the options
 
 ## Laravel Auth
 
-You should add Keycloak Web guard to your `config/auth.php`.
+You should add SsoWebGuardServiceProvider to your `config/app.php`.
 
-Just add **keycloak-web** to "driver" option on configurations you want.
+```
+Julidev\LaravelSsoKeycloak\SsoWebGuardServiceProvider::class
+
+```
+
+Just add **keycloak-web** to "guard" and "user_model" option on configurations you want.
 
 As my default is web, I add to it:
 
 ```php
-'guards' => [
-    'web' => [
-        'driver' => 'keycloak-web',
-        'provider' => 'users',
-    ],
+'database' => [
 
-    // ...
-],
+    'connection' => '',
+
+    // User tables and model.
+    'users_table' => 'users',
+    'users_model' => App\UserAccount::class, // e.g
+]
 ```
 
-And change your provider config too:
-
 ```php
-'providers' => [
-    'users' => [
-        'driver' => 'keycloak-users',
-        'model' => Vizir\KeycloakWebGuard\Models\KeycloakUser::class,
-    ],
+'auth' => [
+    'guard' => 'web', // e.g
 
-    // ...
-]
+    'guards' => [
+        'iam' => [
+            'driver'    => 'keycloak-web',
+            'provider'  => 'users-iam',
+        ],
+    ],
+    'providers' => [
+        'users-iam' => [
+            'driver'    => 'keycloak-users',
+            'model'     => Julidev\LaravelSsoKeycloak\Models\KeycloakUser::class,
+        ],
+    ],
+],
+
 ```
 
 **Note:** if you want use another User Model, check the FAQ *How to implement my Model?*.
@@ -201,11 +206,11 @@ You can extend it and register your own middleware on Kernel.php or just use `Au
 
 ### How to implement my Model?
 
-We registered a new user provider that you configured on `config/auth.php` called "keycloak-users".
+We registered a new user provider that you configured on `config/keycloak-web.php` called "keycloak-users".
 
-In this same configuration you setted the model. So you can register your own model extending `Vizir\KeycloakWebGuard\Models\KeycloakUser` class and changing this configuration.
+In this same configuration you setted the model. So you can register your own model extending `Julidev\LaravelSsoKeycloak\Models\KeycloakUser` class and changing this configuration.
 
-You can implement your own [User Provider](https://laravel.com/docs/5.8/authentication#adding-custom-user-providers): just remember to implement the `retrieveByCredentials` method receiving the Keycloak Profile information to retrieve a instance of model.
+You can implement your own [User Provider](https://laravel.com/docs/7.x/authentication#adding-custom-user-providers): just remember to implement the `retrieveByCredentials` method receiving the Keycloak Profile information to retrieve a instance of model.
 
 Eloquent/Database User Provider should work well as they will parse the Keycloak Profile and make a "where" to your database. So your user data must match with Keycloak Profile.
 
@@ -217,19 +222,19 @@ There's no login/registration form.
 
 ### How can I protect a route?
 
-Just add the `keycloak-web` middleware:
+Just add the `sso` middleware before default middleware auth:
 
 ```php
 // On RouteServiceProvider.php for example
 
 Route::prefix('admin')
-  ->middleware('keycloak-web')
+  ->middleware('sso')
   ->namespace($this->namespace)
   ->group(base_path('routes/web.php'));
 
 // Or with Route facade in another place
 
-Route::group(['middleware' => 'keycloak-web'], function () {
+Route::group(['middleware' => ['sso','web']], function () {
     Route::get('/admin', 'Controller@admin');
 });
 ```
@@ -294,8 +299,7 @@ Just add the options you would like to `guzzle_options` array on `keycloak-web.p
     'verify' => false
 ]
 ```
-
-## Developers
+## Special Thanks
 
 * Mário Valney [@mariovalney](https://twitter.com/mariovalney)
 * [Vizir Software Studio](https://vizir.com.br)
