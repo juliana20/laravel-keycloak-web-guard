@@ -96,7 +96,7 @@ return [
     // Custom auth default for User SSO
     'authentication_defaults' => [
 
-        'enable' => env('AUTHENTICATION_DEFAULTS', true),
+        'enable' => env('KEYCLOAK_AUTH_DEFAULTS', true),
         // Database connection for following tables.
         'connection' => '',
 

@@ -111,13 +111,13 @@ As my default is web, I add to it:
 ```php
 'authentication_defaults' => [
 
-    'enable' => env('AUTHENTICATION_DEFAULTS', true),
+    'enable' => env('KEYCLOAK_AUTH_DEFAULTS', true),
     // Database connection for following tables.
     'connection' => '',
 
     // User tables and model.
     'users_table' => 'users',
-    'users_model' => App\UserAccount::class, // e.g
+    'users_model' => App\User::class, // e.g
 ]
 ```
 
