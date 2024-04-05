@@ -93,9 +93,10 @@ return [
         ],
     ],
 
-    // Custom Database for User SSO
-    'database' => [
+    // Custom auth default for User SSO
+    'authentication_defaults' => [
 
+        'enable' => env('AUTHENTICATION_DEFAULTS', true),
         // Database connection for following tables.
         'connection' => '',
 

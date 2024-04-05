@@ -109,8 +109,10 @@ Just add **keycloak-web** to "guard" and "user_model" option on configurations y
 As my default is web, I add to it:
 
 ```php
-'database' => [
+'authentication_defaults' => [
 
+    'enable' => env('AUTHENTICATION_DEFAULTS', true),
+    // Database connection for following tables.
     'connection' => '',
 
     // User tables and model.

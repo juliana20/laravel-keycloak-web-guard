@@ -373,8 +373,10 @@ class KeycloakService
         session()->put(self::KEYCLOAK_SESSION, $credentials);
         session()->save();
 
-        // login sesi local aplikasi
-        $this->authenticationToken($credentials);
+        // Login sesssion local apps
+        if(config('keycloak-web.authentication_defaults.enable')){
+            $this->authenticationToken($credentials);
+        }
     }
 
     /**
@@ -612,7 +614,7 @@ class KeycloakService
         $user_sso = $this->getUserProfile($credentials);
         if(!empty( $user_sso )){
             // login to local sesi
-            $user = config('keycloak-web.database.users_model')::where('user_id_sso', $user_sso['sub'])->first();
+            $user = config('keycloak-web.authentication_defaults.users_model')::where('user_id_sso', $user_sso['sub'])->first();
             if(empty($user)){
                 throw new KeycloakCallbackException('User SSO belum di mapping dengan user '.env('APP_NAME', 'Aplikasi'));
             }
@@ -628,19 +630,6 @@ class KeycloakService
 
         $url = $this->getOpenIdValue('introspection_endpoint');
         
-        // // Validate JWT Token
-        // $token = new KeycloakAccessToken($credentials);
-        // if (empty($token->getAccessToken())) {
-        //     throw new Exception('Access Token is invalid.');
-        // }
-
-        // $claims = array(
-        //     'aud' => $this->getClientId(),
-        //     'iss' => $this->getOpenIdValue('issuer'),
-        // );
-
-        // $token->validateIdToken($claims);
-
         $params = [
             'client_id' => $this->getClientId(),
             'token' => $credentials['access_token'],
