@@ -4,23 +4,45 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
+use Illuminate\Support\Facades\File;
 
 class BackchannelLogout
 {
-    public function handle(Request $request, \Closure $next)
-    {   
-        \config(['auth.defaults.guard' => config('keycloak-web.auth.guard')]);
+    protected $sessionPath;
 
-        $credentials = KeycloakWeb::retrieveToken();
-        if(!empty($credentials)){
-            $introspection = KeycloakWeb::introspectionEndpoint($credentials);
-            if(!$introspection['active']){
+    public function __construct()
+    {
+        $this->sessionPath = storage_path('framework/sessions_sso');
+        if (!File::exists($this->sessionPath)) {
+            File::makeDirectory($this->sessionPath, 0755, true);
+        }
+    }
+
+
+    public function handle(Request $request, \Closure $next)
+    {
+        \config(['auth.defaults.guard' => config('keycloak-web.auth.guard')]);
+        // Memeriksa additional session
+        $additionalSessionId = $request->session()->get('sso_session_id');
+        if (!$additionalSessionId) {
+            return $next($request);
+        }
+        
+        $sessionFile = "{$this->sessionPath}/{$additionalSessionId}";
+        // Memastikan file sesi tambahan ada sebelum membacanya
+        if (File::exists($sessionFile)) {
+            $sessionData = File::get($sessionFile);
+            $unserializedData = unserialize($sessionData);
+
+            // Memeriksa apakah unserialize berhasil
+            if ($unserializedData === false) {
                 Auth::guard()->logout();
-                $request->session()->invalidate();
+                $request->session()->invalidate();  
             }
 
-            config(['session.lifetime' => $credentials['expires_in']]);
+        } else {
+            Auth::guard()->logout();
+            $request->session()->invalidate();
         }
 
         return $next($request);

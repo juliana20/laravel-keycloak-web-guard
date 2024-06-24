@@ -3,7 +3,9 @@
 namespace Julidev\LaravelSsoKeycloak\Listeners;
 
 use Illuminate\Auth\Events\Logout;
-use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
+use Illuminate\Http\Request;
+use Vizir\KeycloakWebGuard\Facades\KeycloakWeb;
+use Illuminate\Support\Facades\File;
 
 class LogoutListener
 {
@@ -12,11 +14,14 @@ class LogoutListener
      *
      * @return void
      */
-    public function __construct()
-    {
-        //
-    }
+    protected $sessionPath;
+    protected $request;
 
+    public function __construct(Request $request)
+    {
+        $this->request = $request;
+        $this->sessionPath = storage_path('framework/sessions_sso');
+    }
     /**
      * Handle the event.
      *
@@ -25,7 +30,16 @@ class LogoutListener
      */
     public function handle(Logout $event)
     {
+        // Mengambil ID sesi tambahan dari session
+        $additionalSessionId = $this->request->session()->get('sso_session_id');
+        // Menghapus file sesi tambahan jika ada
+        if ($additionalSessionId) {
+            $sessionFile = "{$this->sessionPath}/{$additionalSessionId}";
+            if (File::exists($sessionFile)) {
+                File::delete($sessionFile);
+            }
+        }
+
         KeycloakWeb::logoutToken();
-        
     }
 }

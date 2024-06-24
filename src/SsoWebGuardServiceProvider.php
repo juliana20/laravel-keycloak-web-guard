@@ -19,6 +19,8 @@ use Julidev\LaravelSsoKeycloak\Middleware\BackchannelLogout;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Logout;
 use Julidev\LaravelSsoKeycloak\Listeners\LogoutListener;
+use Illuminate\Auth\Events\Login;
+use Julidev\LaravelSsoKeycloak\Listeners\LoginListener;
 
 class SsoWebGuardServiceProvider extends ServiceProvider
 {
@@ -85,8 +87,9 @@ class SsoWebGuardServiceProvider extends ServiceProvider
             return new Client(Config::get('keycloak-web.guzzle_options', []));
         });
 
-        // Event logout
+        // Event logout & login
         Event::listen(Logout::class, LogoutListener::class);
+        Event::listen(Login::class, LoginListener::class);
     }
 
     /**
