@@ -16,9 +16,8 @@
         "sso"
     ],
     "minimum-stability": "dev",
-    "prefer-stable": true,
     "require": {
-        "julidev/laravel-sso-keycloak": "dev-main"
+        "guzzlehttp/guzzle": "^6.5|^7.0"
     },
     "extra": {
         "laravel": {
