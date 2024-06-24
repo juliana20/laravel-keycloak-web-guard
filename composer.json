@@ -15,7 +15,7 @@
         "authentication",
         "sso"
     ],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "require": {},
     "extra": {
         "laravel": {
