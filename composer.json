@@ -18,7 +18,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "julidev/laravel-sso-keycloak": "dev-master"
+        "julidev/laravel-sso-keycloak": "dev-main"
     },
     "extra": {
         "laravel": {
