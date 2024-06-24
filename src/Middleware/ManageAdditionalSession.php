@@ -4,7 +4,7 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Closure;
 use Illuminate\Support\Facades\File;
-use Vizir\KeycloakWebGuard\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
 
 class ManageAdditionalSession
 {

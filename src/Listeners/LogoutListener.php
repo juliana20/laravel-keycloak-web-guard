@@ -4,7 +4,7 @@ namespace Julidev\LaravelSsoKeycloak\Listeners;
 
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Http\Request;
-use Vizir\KeycloakWebGuard\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
 use Illuminate\Support\Facades\File;
 
 class LogoutListener
