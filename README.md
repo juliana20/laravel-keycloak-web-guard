@@ -127,7 +127,7 @@ As my default is web, I add to it:
 
     'guards' => [
         'iam' => [
-            'driver'    => 'sso',
+            'driver'    => 'sso-web',
             'provider'  => 'users-iam',
         ],
     ],

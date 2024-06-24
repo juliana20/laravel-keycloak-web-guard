@@ -46,7 +46,7 @@ class SsoGuardServiceProvider extends ServiceProvider
         });
 
         // Gate
-        Gate::define('sso', function ($user, $roles, $resource = '') {
+        Gate::define('sso-web', function ($user, $roles, $resource = '') {
             return $user->hasRole($roles, $resource) ?: null;
         });
     }
@@ -59,13 +59,13 @@ class SsoGuardServiceProvider extends ServiceProvider
     public function register()
     {
         // Keycloak Web Guard
-        Auth::extend('sso', function ($app, $name, array $config) {
+        Auth::extend('sso-web', function ($app, $name, array $config) {
             $provider = Auth::createUserProvider($config['provider']);
             return new SSOGuard($provider, $app->request);
         });
         
         // Facades
-        $this->app->bind('sso', function($app) {
+        $this->app->bind('sso-badung', function($app) {
             return $app->make(SSOService::class);
         });
 
