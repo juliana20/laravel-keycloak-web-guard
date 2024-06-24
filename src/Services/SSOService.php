@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Config;
 use Julidev\LaravelSsoKeycloak\Auth\SSOAccessToken;
 use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
 use Illuminate\Support\Facades\Auth;
+use Julidev\LaravelSsoKeycloak\Helpers\JWT;
+use Illuminate\Support\Facades\File;
 
 class SSOService
 {
@@ -605,6 +607,58 @@ class SSOService
         }
 
         return $response;
+    }
+
+    public function backchannelLogout($logout_token)
+    {
+        try {
+            // Get the public key from the environment variable
+            $public_key = "-----BEGIN PUBLIC KEY-----\n" . config('sso-web.realm_public_key') . "\n-----END PUBLIC KEY-----";
+            // Split the JWT into its three parts
+            list($header_encoded, $payload_encoded, $signature_encoded) = explode('.', $logout_token);
+            // Decode the JWT parts
+            $header = json_decode(JWT::base64UrlDecode($header_encoded), true);
+            $payload = json_decode(JWT::base64UrlDecode($payload_encoded), true);
+            $signature = JWT::base64UrlDecode($signature_encoded);
+            // Verify the algorithm
+            if ($header['alg'] !== 'RS256') {
+                throw new Exception('[SSO Service] Unsupported algorithm');
+            }
+            // Verify the signature
+            $verify_signature = function ($input, $signature, $key) {
+                return openssl_verify($input, $signature, $key, OPENSSL_ALGO_SHA256) === 1;
+            };
+            // Create the data string to verify against
+            $data_to_verify = "$header_encoded.$payload_encoded";
+        
+            // Verify the signature
+            $is_valid = $verify_signature($data_to_verify, $signature, openssl_pkey_get_public($public_key));
+        
+            if ($is_valid) {
+                // Signature is valid, process the payload
+                $decoded_array = (array) $payload;
+                Log::info('[SSO Service] Logout Berhasil!'.'-'. json_encode($decoded_array));
+                // Check if 'sid' exists in the payload and log it
+                if (isset($decoded_array['sid'])) {
+                    // Mengambil ID sesi tambahan dari session
+                    $sid = $decoded_array['sid'];
+                    $session_path = config('sso-web.additional_session.path');
+                    // Menghapus file sesi tambahan jika ada
+                    if ($sid) {
+                        $session_file = "{$session_path}/{$sid}";
+                        if (File::exists($session_file)) {
+                            File::delete($session_file);
+                        }
+                    }
+                }
+            } else {
+                // Signature is invalid
+                throw new Exception('[SSO Service] Invalid token signature');
+            }
+        
+        } catch (\Exception $e) {
+            Log::error('[SSO Service] ' . print_r($e, true));
+        }
     }
     
     protected function authenticationToken($credentials)
