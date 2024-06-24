@@ -4,7 +4,7 @@ namespace Julidev\LaravelSsoKeycloak\Auth;
 
 use Exception;
 
-class KeycloakAccessToken
+class SSOAccessToken
 {
     /**
      * @var string

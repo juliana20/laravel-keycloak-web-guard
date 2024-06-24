@@ -5,7 +5,7 @@ namespace Julidev\LaravelSsoKeycloak\Models;
 use Auth;
 use Illuminate\Contracts\Auth\Authenticatable;
 
-class KeycloakUser implements Authenticatable
+class SSOUser implements Authenticatable
 {
     /**
      * Attributes we retrieve from Profile
@@ -27,7 +27,7 @@ class KeycloakUser implements Authenticatable
     /**
      * Constructor
      *
-     * @param array $profile Keycloak user info
+     * @param array $profile SSO user info
      */
     public function __construct(array $profile)
     {
@@ -84,7 +84,7 @@ class KeycloakUser implements Authenticatable
     /**
      * Check user has roles
      *
-     * @see KeycloakWebGuard::hasRole()
+     * @see SSOGuard::hasRole()
      *
      * @param  string|array  $roles
      * @param  string  $resource

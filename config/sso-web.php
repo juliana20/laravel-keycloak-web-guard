@@ -56,7 +56,7 @@ return [
      * Accept a string as the first parameter of route() or false to disable the route.
      *
      * The routes will receive the name "keycloak.{route}" and login/callback are required.
-     * So, if you make it false, you shoul register a named 'keycloak.login' route and extend
+     * So, if you make it false, you shoul register a named 'sso.login' route and extend
      * the Julidev\LaravelSsoKeycloak\Controllers\AuthController controller.
      */
     'routes' => [
@@ -81,14 +81,14 @@ return [
 
         'guards' => [
             'iam' => [
-                'driver'    => 'keycloak-web',
+                'driver'    => 'sso-web',
                 'provider'  => 'users-iam',
             ],
         ],
         'providers' => [
             'users-iam' => [
-                'driver'    => 'keycloak-users',
-                'model'     => Julidev\LaravelSsoKeycloak\Models\KeycloakUser::class,
+                'driver'    => 'sso-users',
+                'model'     => Julidev\LaravelSsoKeycloak\Models\SSOUser::class,
             ],
         ],
     ],

@@ -5,8 +5,8 @@ namespace Julidev\LaravelSsoKeycloak\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Julidev\LaravelSsoKeycloak\Exceptions\KeycloakCallbackException;
-use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
+use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
 
 class AuthController extends Controller
 {
@@ -17,8 +17,8 @@ class AuthController extends Controller
      */
     public function login()
     {
-        $url = KeycloakWeb::getLoginUrl();
-        KeycloakWeb::saveState();
+        $url = SSOBadung::getLoginUrl();
+        SSOBadung::saveState();
 
         return redirect($url);
     }
@@ -30,8 +30,8 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        $url = KeycloakWeb::getLogoutUrl();
-        KeycloakWeb::forgetToken();
+        $url = SSOBadung::getLogoutUrl();
+        SSOBadung::forgetToken();
         return redirect($url);
     }
 
@@ -42,14 +42,14 @@ class AuthController extends Controller
      */
     public function register()
     {
-        $url = KeycloakWeb::getRegisterUrl();
+        $url = SSOBadung::getRegisterUrl();
         return redirect($url);
     }
 
     /**
      * Keycloak callback page
      *
-     * @throws KeycloakCallbackException
+     * @throws SSOCallbackException
      *
      * @return view
      */
@@ -60,28 +60,28 @@ class AuthController extends Controller
             $error = $request->input('error_description');
             $error = ($error) ?: $request->input('error');
 
-            throw new KeycloakCallbackException($error);
+            throw new SSOCallbackException($error);
         }
 
         // Check given state to mitigate CSRF attack
         $state = $request->input('state');
-        if (empty($state) || ! KeycloakWeb::validateState($state)) {
-            KeycloakWeb::forgetState();
+        if (empty($state) || ! SSOBadung::validateState($state)) {
+            SSOBadung::forgetState();
 
-            throw new KeycloakCallbackException('Invalid state');
+            throw new SSOCallbackException('Invalid state');
         }
 
         // Change code for token
         $code = $request->input('code');
         if (! empty($code)) {
-            $token = KeycloakWeb::getAccessToken($code);
+            $token = SSOBadung::getAccessToken($code);
 
             if (Auth::validate($token)) {
-                $url = config('keycloak-web.redirect_url', '/admin');
+                $url = config('sso-web.redirect_url', '/admin');
                 return redirect()->intended($url);
             }
         }
 
-        return redirect(route('keycloak.login'));
+        return redirect(route('sso.login'));
     }
 }

@@ -5,9 +5,9 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
-use Julidev\LaravelSsoKeycloak\Exceptions\KeycloakCanException;
+use Julidev\LaravelSsoKeycloak\Middleware\Authenticated;
 
-class KeycloakCan extends KeycloakAuthenticated
+class SSORoleOne extends Authenticated
 {
     /**
      * Handle an incoming request.
@@ -24,8 +24,10 @@ class KeycloakCan extends KeycloakAuthenticated
         }
 
         $guards = explode('|', ($guards[0] ?? ''));
-        if (Auth::hasRole($guards)) {
-            return $next($request);
+        foreach ($guards as $guard) {
+            if (Auth::hasRole($guard)) {
+                return $next($request);
+            }
         }
 
         throw new AuthorizationException('Forbidden', 403);

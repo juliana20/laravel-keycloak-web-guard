@@ -9,23 +9,21 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Route;
-use Julidev\LaravelSsoKeycloak\Auth\KeycloakAccessToken;
-use Julidev\LaravelSsoKeycloak\Exceptions\KeycloakCallbackException;
-use Julidev\LaravelSsoKeycloak\Auth\Guard\KeycloakWebGuard;
+use Julidev\LaravelSsoKeycloak\Auth\SSOAccessToken;
+use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
 use Illuminate\Support\Facades\Auth;
 
-class KeycloakService
+class SSOService
 {
     /**
      * The Session key for token
      */
-    const KEYCLOAK_SESSION = '_keycloak_token';
+    const SSO_SESSION = '_sso_token';
 
     /**
      * The Session key for state
      */
-    const KEYCLOAK_SESSION_STATE = '_keycloak_state';
+    const SSO_SESSION_STATE = '_sso_state';
 
     /**
      * Keycloak URL
@@ -108,31 +106,31 @@ class KeycloakService
     public function __construct(ClientInterface $client)
     {
         if (is_null($this->baseUrl)) {
-            $this->baseUrl = trim(Config::get('keycloak-web.base_url'), '/');
+            $this->baseUrl = trim(Config::get('sso-web.base_url'), '/');
         }
 
         if (is_null($this->realm)) {
-            $this->realm = Config::get('keycloak-web.realm');
+            $this->realm = Config::get('sso-web.realm');
         }
 
         if (is_null($this->clientId)) {
-            $this->clientId = Config::get('keycloak-web.client_id');
+            $this->clientId = Config::get('sso-web.client_id');
         }
 
         if (is_null($this->clientSecret)) {
-            $this->clientSecret = Config::get('keycloak-web.client_secret');
+            $this->clientSecret = Config::get('sso-web.client_secret');
         }
 
         if (is_null($this->cacheOpenid)) {
-            $this->cacheOpenid = Config::get('keycloak-web.cache_openid', false);
+            $this->cacheOpenid = Config::get('sso-web.cache_openid', false);
         }
 
         if (is_null($this->callbackUrl)) {
-            $this->callbackUrl = route('keycloak.callback');
+            $this->callbackUrl = route('sso.callback');
         }
 
         if (is_null($this->redirectLogout)) {
-            $this->redirectLogout = Config::get('keycloak-web.redirect_logout');
+            $this->redirectLogout = Config::get('sso-web.redirect_logout');
         }
 
         $this->state = $this->generateRandomState();
@@ -313,7 +311,7 @@ class KeycloakService
         $user = [];
         try {
             // Validate JWT Token
-            $token = new KeycloakAccessToken($credentials);
+            $token = new SSOAccessToken($credentials);
 
             if (empty($token->getAccessToken())) {
                 throw new Exception('Access Token is invalid.');
@@ -347,7 +345,7 @@ class KeycloakService
         } catch (GuzzleException $e) {
             $this->logException($e);
         } catch (Exception $e) {
-            Log::error('[Keycloak Service] ' . print_r($e->getMessage(), true));
+            Log::error('[SSO Service] ' . print_r($e->getMessage(), true));
         }
 
         return $user;
@@ -360,7 +358,7 @@ class KeycloakService
      */
     public function retrieveToken()
     {
-        return session()->get(self::KEYCLOAK_SESSION);
+        return session()->get(self::SSO_SESSION);
     }
 
     /**
@@ -370,11 +368,11 @@ class KeycloakService
      */
     public function saveToken($credentials)
     {
-        session()->put(self::KEYCLOAK_SESSION, $credentials);
+        session()->put(self::SSO_SESSION, $credentials);
         session()->save();
 
         // Login sesssion local apps
-        if(config('keycloak-web.authentication_defaults.enable')){
+        if(config('sso-web.authentication_defaults.enable')){
             $this->authenticationToken($credentials);
         }
     }
@@ -386,7 +384,7 @@ class KeycloakService
      */
     public function forgetToken()
     {
-        session()->forget(self::KEYCLOAK_SESSION);
+        session()->forget(self::SSO_SESSION);
         session()->save();
     }
 
@@ -397,7 +395,7 @@ class KeycloakService
      */
     public function validateState($state)
     {
-        $challenge = session()->get(self::KEYCLOAK_SESSION_STATE);
+        $challenge = session()->get(self::SSO_SESSION_STATE);
         return (! empty($state) && ! empty($challenge) && $challenge === $state);
     }
 
@@ -408,7 +406,7 @@ class KeycloakService
      */
     public function saveState()
     {
-        session()->put(self::KEYCLOAK_SESSION_STATE, $this->state);
+        session()->put(self::SSO_SESSION_STATE, $this->state);
         session()->save();
     }
 
@@ -419,7 +417,7 @@ class KeycloakService
      */
     public function forgetState()
     {
-        session()->forget(self::KEYCLOAK_SESSION_STATE);
+        session()->forget(self::SSO_SESSION_STATE);
         session()->save();
     }
 
@@ -465,7 +463,7 @@ class KeycloakService
      */
     protected function getOpenIdConfiguration()
     {
-        $cacheKey = 'keycloak_web_guard_openid-' . $this->realm . '-' . md5($this->baseUrl);
+        $cacheKey = 'sso_web_guard_openid-' . $this->realm . '-' . md5($this->baseUrl);
 
         // From cache?
         if ($this->cacheOpenid) {
@@ -492,7 +490,7 @@ class KeycloakService
         } catch (GuzzleException $e) {
             $this->logException($e);
 
-            throw new Exception('[Keycloak Error] It was not possible to load OpenId configuration: ' . $e->getMessage());
+            throw new Exception('[SSO Error] It was not possible to load OpenId configuration: ' . $e->getMessage());
         }
 
         // Save cache
@@ -515,7 +513,7 @@ class KeycloakService
             return $credentials;
         }
 
-        $token = new KeycloakAccessToken($credentials);
+        $token = new SSOAccessToken($credentials);
         if (! $token->hasExpired()) {
             return $credentials;
         }
@@ -541,7 +539,7 @@ class KeycloakService
     {
         // Guzzle 7
         if (! method_exists($e, 'getResponse') || empty($e->getResponse())) {
-            Log::error('[Keycloak Service] ' . $e->getMessage());
+            Log::error('[SSO Service] ' . $e->getMessage());
             return;
         }
 
@@ -550,7 +548,7 @@ class KeycloakService
             'response' => $e->getResponse()->getBody()->getContents(),
         ];
 
-        Log::error('[Keycloak Service] ' . print_r($error, true));
+        Log::error('[SSO Service] ' . print_r($error, true));
     }
 
     /**
@@ -614,12 +612,12 @@ class KeycloakService
         $user_sso = $this->getUserProfile($credentials);
         if(!empty( $user_sso )){
             // login to local sesi
-            $user = config('keycloak-web.authentication_defaults.users_model')::where('user_id_sso', $user_sso['sub'])->first();
+            $user = config('sso-web.authentication_defaults.users_model')::where('user_id_sso', $user_sso['sub'])->first();
             if(empty($user)){
-                throw new KeycloakCallbackException('User SSO belum di mapping dengan user '.env('APP_NAME', 'Aplikasi'));
+                throw new SSOCallbackException('User SSO belum di mapping dengan user '.env('APP_NAME', 'Aplikasi'));
             }
 
-            Auth::guard(config('keycloak-web.auth.guard'))->login($user, false);
+            Auth::guard(config('sso-web.auth.guard'))->login($user, false);
         }
     }
     public function introspectionEndpoint($credentials)

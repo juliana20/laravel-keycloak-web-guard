@@ -12,7 +12,7 @@ class BackchannelLogout
 
     public function __construct()
     {
-        $this->sessionPath = config('keycloak-web.additional_session.path');
+        $this->sessionPath = config('sso-web.additional_session.path');
         if (!File::exists($this->sessionPath)) {
             File::makeDirectory($this->sessionPath, 0755, true);
         }
@@ -21,7 +21,7 @@ class BackchannelLogout
 
     public function handle(Request $request, \Closure $next)
     {
-        \config(['auth.defaults.guard' => config('keycloak-web.auth.guard')]);
+        \config(['auth.defaults.guard' => config('sso-web.auth.guard')]);
         // Memeriksa additional session
         $additionalSessionId = $request->session()->get('sso_session_id');
         if (!$additionalSessionId) {

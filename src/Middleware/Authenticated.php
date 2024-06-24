@@ -4,7 +4,7 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Illuminate\Auth\Middleware\Authenticate;
 
-class KeycloakAuthenticated extends Authenticate
+class Authenticated extends Authenticate
 {
     /**
      * Redirect user if it's not authenticated.
@@ -14,6 +14,6 @@ class KeycloakAuthenticated extends Authenticate
      */
     protected function redirectTo($request)
     {
-        return route('keycloak.login');
+        return route('sso.login');
     }
 }

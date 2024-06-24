@@ -38,13 +38,13 @@ composer require julidev/laravel-sso-keycloak
 If you want to change routes or the default values for Keycloak, publish the config file:
 
 ```
-php artisan vendor:publish  --provider="Julidev\LaravelSsoKeycloak\SsoWebGuardServiceProvider"
+php artisan vendor:publish  --provider="Julidev\LaravelSsoKeycloak\SsoGuardServiceProvider"
 
 ```
 
 ## Configuration
 
-After publishing `config/keycloak-web.php` file, you can change the routes:
+After publishing `config/sso-web.php` file, you can change the routes:
 
 ```php
 'redirect_url' => '/admin',
@@ -93,18 +93,18 @@ We can cache the OpenId Configuration: it's a list of endpoints we require to Ke
 
 If you activate it, *remember to flush the cache* when change the realm or url.
 
-Just add the options you would like as an array to the" to "Just add the options you would like to guzzle_options array on keycloak-web.php config file. For example:
+Just add the options you would like as an array to the" to "Just add the options you would like to guzzle_options array on sso-web.php config file. For example:
 
 ## Laravel Auth
 
-You should add SsoWebGuardServiceProvider to your `config/app.php`.
+You should add SsoGuardServiceProvider to your `config/app.php`.
 
 ```
-Julidev\LaravelSsoKeycloak\SsoWebGuardServiceProvider::class
+Julidev\LaravelSsoKeycloak\SsoGuardServiceProvider::class
 
 ```
 
-Just add **keycloak-web** to "guard" and "user_model" option on configurations you want.
+Just add **sso** to "guard" and "user_model" option on configurations you want.
 
 As my default is web, I add to it:
 
@@ -127,14 +127,14 @@ As my default is web, I add to it:
 
     'guards' => [
         'iam' => [
-            'driver'    => 'keycloak-web',
+            'driver'    => 'sso',
             'provider'  => 'users-iam',
         ],
     ],
     'providers' => [
         'users-iam' => [
-            'driver'    => 'keycloak-users',
-            'model'     => Julidev\LaravelSsoKeycloak\Models\KeycloakUser::class,
+            'driver'    => 'sso-users',
+            'model'     => Julidev\LaravelSsoKeycloak\Models\SSOUser::class,
         ],
     ],
 ],
@@ -164,7 +164,7 @@ You can use [Laravel Authorization Gate](https://laravel.com/docs/7.x/authorizat
 For example, in your Controller you can check **one role**:
 
 ```php
-if (Gate::denies('keycloak-web', 'manage-account')) {
+if (Gate::denies('sso', 'manage-account')) {
   return abort(403);
 }
 ```
@@ -172,7 +172,7 @@ if (Gate::denies('keycloak-web', 'manage-account')) {
 Or **multiple roles**:
 
 ```php
-if (Gate::denies('keycloak-web', ['manage-account'])) {
+if (Gate::denies('sso', ['manage-account'])) {
   return abort(403);
 }
 ```
@@ -180,7 +180,7 @@ if (Gate::denies('keycloak-web', ['manage-account'])) {
 And **roles for a resource**:
 
 ```php
-if (Gate::denies('keycloak-web', 'manage-account', 'another-resource')) {
+if (Gate::denies('sso', 'manage-account', 'another-resource')) {
   return abort(403);
 }
 ```
@@ -189,15 +189,15 @@ if (Gate::denies('keycloak-web', 'manage-account', 'another-resource')) {
 
 ### Keycloak Can Middleware
 
-If you do not want to use the Gate or already implemented middlewares, you can check user against one or more roles using the `keycloak-web-can` Middleware.
+If you do not want to use the Gate or already implemented middlewares, you can check user against one or more roles using the `sso-web-can` Middleware.
 
 Add this to your Controller's `__construct` method:
 
 ```php
-$this->middleware('keycloak-web-can:manage-something-cool');
+$this->middleware('sso-web-can:manage-something-cool');
 
 // For multiple roles, separate with '|'
-$this->middleware('keycloak-web-can:manage-something-cool|manage-something-nice|manage-my-application');
+$this->middleware('sso-web-can:manage-something-cool|manage-something-nice|manage-my-application');
 ```
 
 This middleware works searching for all roles on default resource (client_id).
@@ -208,9 +208,9 @@ You can extend it and register your own middleware on Kernel.php or just use `Au
 
 ### How to implement my Model?
 
-We registered a new user provider that you configured on `config/keycloak-web.php` called "keycloak-users".
+We registered a new user provider that you configured on `config/sso-web.php` called "sso-users".
 
-In this same configuration you setted the model. So you can register your own model extending `Julidev\LaravelSsoKeycloak\Models\KeycloakUser` class and changing this configuration.
+In this same configuration you setted the model. So you can register your own model extending `Julidev\LaravelSsoKeycloak\Models\SSOUser` class and changing this configuration.
 
 You can implement your own [User Provider](https://laravel.com/docs/7.x/authentication#adding-custom-user-providers): just remember to implement the `retrieveByCredentials` method receiving the Keycloak Profile information to retrieve a instance of model.
 
@@ -251,7 +251,7 @@ State is a unique and non-guessable string used to mitigate CSRF attacks.
 
 We associate each authentication request about to be initiated with one random state and check on callback. You should do it if you are extending/implementing your own Auth controller.
 
-Use `KeycloakWeb::saveState()` method to save the already generated state to session and `KeycloakWeb::validateState()` to check the current state against the saved one.
+Use `SSOBadung::saveState()` method to save the already generated state to session and `SSOBadung::validateState()` to check the current state against the saved one.
 
 ### I'm having problems with session (stuck on login loop)
 
@@ -294,7 +294,7 @@ In some use cases you may need to override the default Guzzle options - likely e
 
 Every [Guzzle Request Option](http://docs.guzzlephp.org/en/stable/request-options.html) is supported and is passed directly to the Guzzle Client instance.
 
-Just add the options you would like to `guzzle_options` array on `keycloak-web.php` config file. For example:
+Just add the options you would like to `guzzle_options` array on `sso-web.php` config file. For example:
 
 ```
 'guzzle_options' => [

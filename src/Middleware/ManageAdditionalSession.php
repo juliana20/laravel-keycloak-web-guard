@@ -4,7 +4,7 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Closure;
 use Illuminate\Support\Facades\File;
-use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
 
 class ManageAdditionalSession
 {
@@ -13,7 +13,7 @@ class ManageAdditionalSession
 
     public function __construct()
     {
-        $this->sessionPath = config('keycloak-web.additional_session.path');
+        $this->sessionPath = config('sso-web.additional_session.path');
         if (!File::exists($this->sessionPath)) {
             File::makeDirectory($this->sessionPath, 0755, true);
         }
@@ -21,7 +21,7 @@ class ManageAdditionalSession
 
     public function handle($request, Closure $next)
     {
-        $sso_token = KeycloakWeb::retrieveToken();
+        $sso_token = SSOBadung::retrieveToken();
         // Generate or retrieve the additional session ID
         if (!$request->session()->has('sso_session_id')) {
             $this->sessionId = $sso_token['session_state'] ?? session()->getId();

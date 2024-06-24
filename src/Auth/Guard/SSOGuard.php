@@ -6,16 +6,16 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Julidev\LaravelSsoKeycloak\Auth\KeycloakAccessToken;
-use Julidev\LaravelSsoKeycloak\Exceptions\KeycloakCallbackException;
-use Julidev\LaravelSsoKeycloak\Models\KeycloakUser;
-use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Auth\SSOAccessToken;
+use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
+use Julidev\LaravelSsoKeycloak\Models\SSOUser;
 use Illuminate\Contracts\Auth\UserProvider;
+use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
 
-class KeycloakWebGuard implements Guard
+class SSOGuard implements Guard
 {
     /**
-     * @var null|Authenticatable|KeycloakUser
+     * @var null|Authenticatable|SSOUser
      */
     protected $user;
 
@@ -110,7 +110,7 @@ class KeycloakWebGuard implements Guard
          * Store the section
          */
         $credentials['refresh_token'] = $credentials['refresh_token'] ?? '';
-        KeycloakWeb::saveToken($credentials);
+        SSOBadung::saveToken($credentials);
 
         return $this->authenticate();
     }
@@ -118,23 +118,23 @@ class KeycloakWebGuard implements Guard
     /**
      * Try to authenticate the user
      *
-     * @throws KeycloakCallbackException
+     * @throws SSOCallbackException
      * @return boolean
      */
     public function authenticate()
     {
         // Get Credentials
-        $credentials = KeycloakWeb::retrieveToken();
+        $credentials = SSOBadung::retrieveToken();
         if (empty($credentials)) {
             return false;
         }
 
-        $user = KeycloakWeb::getUserProfile($credentials);
+        $user = SSOBadung::getUserProfile($credentials);
         if (empty($user)) {
-            KeycloakWeb::forgetToken();
+            SSOBadung::forgetToken();
 
             if (Config::get('app.debug', false)) {
-                throw new KeycloakCallbackException('User cannot be authenticated.');
+                throw new SSOCallbackException('User cannot be authenticated.');
             }
 
             return false;
@@ -157,20 +157,20 @@ class KeycloakWebGuard implements Guard
     public function roles($resource = '')
     {
         if (empty($resource)) {
-            $resource = Config::get('keycloak-web.client_id');
+            $resource = Config::get('sso-web.client_id');
         }
 
         if (! $this->check()) {
             return false;
         }
 
-        $token = KeycloakWeb::retrieveToken();
+        $token = SSOBadung::retrieveToken();
 
         if (empty($token) || empty($token['access_token'])) {
             return false;
         }
 
-        $token = new KeycloakAccessToken($token);
+        $token = new SSOAccessToken($token);
         $token = $token->parseAccessToken();
 
         $resourceRoles = $token['resource_access'] ?? [];

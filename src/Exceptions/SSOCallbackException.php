@@ -2,9 +2,7 @@
 
 namespace Julidev\LaravelSsoKeycloak\Exceptions;
 
-use Illuminate\Auth\AuthenticationException;
-
-class KeycloakCanException extends AuthenticationException
+class SSOCallbackException extends \RuntimeException
 {
     /**
      * Keycloak Callback Error
@@ -14,8 +12,10 @@ class KeycloakCanException extends AuthenticationException
      * @param array           $headers  [description]
      * @param int|integer     $code     [description]
      */
-    public function sss__construct(string $error = '')
+    public function __construct(string $error = '')
     {
+        $message = '[SSO Error] ' . $error;
 
+        parent::__construct($message);
     }
 }

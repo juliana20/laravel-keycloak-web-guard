@@ -22,6 +22,6 @@ class SsoAuthenticated
             return $next($request);
         }
 
-        return redirect()->route('keycloak.login');
+        return redirect()->route('sso.login');
     }
 }

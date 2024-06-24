@@ -4,7 +4,7 @@ namespace Julidev\LaravelSsoKeycloak\Listeners;
 
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Http\Request;
-use Julidev\LaravelSsoKeycloak\Facades\KeycloakWeb;
+use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
 use Illuminate\Support\Facades\File;
 
 class LogoutListener
@@ -20,7 +20,7 @@ class LogoutListener
     public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->sessionPath = config('keycloak-web.additional_session.path');
+        $this->sessionPath = config('sso-web.additional_session.path');
     }
     /**
      * Handle the event.
@@ -40,6 +40,6 @@ class LogoutListener
             }
         }
 
-        KeycloakWeb::logoutToken();
+        SSOBadung::logoutToken();
     }
 }

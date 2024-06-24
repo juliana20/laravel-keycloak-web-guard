@@ -1,13 +1,12 @@
 <?php
 
-namespace Vizir\KeycloakWebGuard\Middleware;
+namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
-use Vizir\KeycloakWebGuard\Exceptions\KeycloakCanException;
 
-class KeycloakCanOne extends KeycloakAuthenticated
+class SSORole extends Authenticated
 {
     /**
      * Handle an incoming request.
@@ -24,10 +23,8 @@ class KeycloakCanOne extends KeycloakAuthenticated
         }
 
         $guards = explode('|', ($guards[0] ?? ''));
-        foreach ($guards as $guard) {
-            if (Auth::hasRole($guard)) {
-                return $next($request);
-            }
+        if (Auth::hasRole($guards)) {
+            return $next($request);
         }
 
         throw new AuthorizationException('Forbidden', 403);
