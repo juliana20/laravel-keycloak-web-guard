@@ -13,7 +13,7 @@ class ManageAdditionalSession
 
     public function __construct()
     {
-        $this->sessionPath = storage_path('framework/sessions_sso');
+        $this->sessionPath = config('keycloak-web.additional_session.path');
         if (!File::exists($this->sessionPath)) {
             File::makeDirectory($this->sessionPath, 0755, true);
         }

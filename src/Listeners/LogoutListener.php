@@ -20,7 +20,7 @@ class LogoutListener
     public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->sessionPath = storage_path('framework/sessions_sso');
+        $this->sessionPath = config('keycloak-web.additional_session.path');
     }
     /**
      * Handle the event.

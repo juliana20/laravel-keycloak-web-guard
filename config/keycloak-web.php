@@ -103,5 +103,9 @@ return [
         // User tables and model.
         'users_table' => 'users',
         'users_model' => App\User::class,
-    ]
+    ],
+
+    'additional_session' => [
+        'path' => env('SSO_SESSION_PATH', storage_path('framework/sessions_sso'))
+    ],
 ];
