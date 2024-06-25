@@ -5,8 +5,9 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Julidev\LaravelSsoKeycloak\Middleware\Authenticated;
 
-class SsoAuthenticated
+class SsoAuthenticated extends Authenticated
 {
     /**
      * Handle an incoming request.
@@ -22,6 +23,6 @@ class SsoAuthenticated
             return $next($request);
         }
 
-        return redirect()->route('sso.login');
+        $this->redirectTo($request);
     }
 }
