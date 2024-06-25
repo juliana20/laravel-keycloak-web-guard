@@ -22,7 +22,7 @@ class SSOService
      * The Session key for token
      */
     const SSO_SESSION = '_sso_token';
-    const SSO_SESSION_FAKE = '_sso_token_fake';
+    const SSO_SID = '_sso_sid';
 
     /**
      * The Session key for state
@@ -401,8 +401,8 @@ class SSOService
      */
     public function forgetToken()
     {
-        if (session()->has(self::SSO_SESSION_FAKE)) {
-            session()->forget(self::SSO_SESSION_FAKE);
+        if (session()->has(self::SSO_SID)) {
+            session()->forget(self::SSO_SID);
         }
         session()->forget(self::SSO_SESSION);
         session()->save();
@@ -692,11 +692,11 @@ class SSOService
             Auth::guard(config('sso-web.auth.guard'))->login($user, false);
 
              // Duplicate sesi untuk  backchannel logout
-             if (!session()->has(self::SSO_SESSION_FAKE)) {
+             if (!session()->has(self::SSO_SID)) {
                 $this->sessionId = $credentials['session_state'];
-                session()->put(self::SSO_SESSION_FAKE, $this->sessionId);
+                session()->put(self::SSO_SID, $this->sessionId);
             } else {
-                $this->sessionId = session()->get(self::SSO_SESSION_FAKE);
+                $this->sessionId = session()->get(self::SSO_SID);
             }
             // Load additional session data from the file
             $session_file = "{$this->sessionPath}/{$this->sessionId}";

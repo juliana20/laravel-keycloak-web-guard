@@ -21,7 +21,7 @@ class BackchannelLogout
     {
         \config(['auth.defaults.guard' => config('sso-web.auth.guard')]);
         // Memeriksa sso session id
-        $sso_sid = $request->session()->get(SSOService::SSO_SESSION_FAKE);
+        $sso_sid = $request->session()->get(SSOService::SSO_SID);
         if (!$sso_sid) {
             return $next($request);
         }
