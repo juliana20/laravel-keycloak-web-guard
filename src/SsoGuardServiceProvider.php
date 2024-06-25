@@ -19,8 +19,6 @@ use Julidev\LaravelSsoKeycloak\Middleware\BackchannelLogout;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Logout;
 use Julidev\LaravelSsoKeycloak\Listeners\LogoutListener;
-use Illuminate\Auth\Events\Login;
-use Julidev\LaravelSsoKeycloak\Listeners\LoginListener;
 
 class SsoGuardServiceProvider extends ServiceProvider
 {
@@ -89,7 +87,6 @@ class SsoGuardServiceProvider extends ServiceProvider
 
         // Event logout & login
         Event::listen(Logout::class, LogoutListener::class);
-        Event::listen(Login::class, LoginListener::class);
     }
 
     /**

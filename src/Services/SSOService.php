@@ -14,6 +14,7 @@ use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
 use Illuminate\Support\Facades\Auth;
 use Julidev\LaravelSsoKeycloak\Helpers\JWT;
 use Illuminate\Support\Facades\File;
+use Illuminate\Http\Request;
 
 class SSOService
 {
@@ -21,6 +22,7 @@ class SSOService
      * The Session key for token
      */
     const SSO_SESSION = '_sso_token';
+    const SSO_SESSION_FAKE = '_sso_token_fake';
 
     /**
      * The Session key for state
@@ -97,6 +99,10 @@ class SSOService
      */
     protected $httpClient;
 
+    protected $sessionId;
+    protected $sessionPath;
+    protected $request;
+
     /**
      * The Constructor
      * You can extend this service setting protected variables before call
@@ -105,7 +111,7 @@ class SSOService
      * @param ClientInterface $client
      * @return void
      */
-    public function __construct(ClientInterface $client)
+    public function __construct(ClientInterface $client, Request $request)
     {
         if (is_null($this->baseUrl)) {
             $this->baseUrl = trim(Config::get('sso-web.base_url'), '/');
@@ -137,6 +143,15 @@ class SSOService
 
         $this->state = $this->generateRandomState();
         $this->httpClient = $client;
+
+        $this->sessionId = $this->state;
+        if (is_null($this->sessionPath)) {
+            $this->sessionPath = Config::get('keycloak-web.additional_session.path');
+            if (!File::exists($this->sessionPath)) {
+                File::makeDirectory($this->sessionPath, 0755, true);
+            }
+        }
+        $this->request = $request;
     }
 
     /**
@@ -672,6 +687,25 @@ class SSOService
             }
 
             Auth::guard(config('sso-web.auth.guard'))->login($user, false);
+
+             // Duplicate sesi untuk  backchannel logout
+             if (!session()->has(self::SSO_SESSION)) {
+                $this->sessionId = $credentials['session_state'];
+                session()->put(self::SSO_SESSION, $this->sessionId);
+            } else {
+                $this->sessionId = session()->get(self::SSO_SESSION);
+            }
+            // Load additional session data from the file
+            $session_file = "{$this->sessionPath}/{$this->sessionId}";
+            $additional_session = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
+    
+            // Make additional session data available in the request
+            $this->request->attributes->set('additional_session', $additional_session);
+            $this->request->attributes->set('additional_session', session()->all());
+    
+            // Save additional session data back to the file
+            $additional_session = $this->request->attributes->get('additional_session');
+            File::put($session_file, serialize($additional_session));
         }
     }
     public function introspectionEndpoint($credentials)

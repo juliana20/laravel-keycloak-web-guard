@@ -5,6 +5,7 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Julidev\LaravelSsoKeycloak\Services\SSOService;
 
 class BackchannelLogout
 {
@@ -13,9 +14,6 @@ class BackchannelLogout
     public function __construct()
     {
         $this->sessionPath = config('sso-web.additional_session.path');
-        if (!File::exists($this->sessionPath)) {
-            File::makeDirectory($this->sessionPath, 0755, true);
-        }
     }
 
 
@@ -23,7 +21,7 @@ class BackchannelLogout
     {
         \config(['auth.defaults.guard' => config('sso-web.auth.guard')]);
         // Memeriksa additional session
-        $additionalSessionId = $request->session()->get('sso_session_id');
+        $additionalSessionId = $request->session()->get(SSOService::SSO_SESSION_FAKE);
         if (!$additionalSessionId) {
             return $next($request);
         }
