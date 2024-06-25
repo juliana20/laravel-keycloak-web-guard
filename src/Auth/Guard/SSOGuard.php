@@ -133,9 +133,9 @@ class SSOGuard implements Guard
         if (empty($user)) {
             SSOBadung::forgetToken();
 
-            if (Config::get('app.debug', false)) {
-                throw new SSOCallbackException('User cannot be authenticated.');
-            }
+            // if (Config::get('app.debug', false)) {
+            //     throw new SSOCallbackException('User cannot be authenticated.');
+            // }
 
             return false;
         }

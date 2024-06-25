@@ -20,26 +20,29 @@ class BackchannelLogout
     public function handle(Request $request, \Closure $next)
     {
         \config(['auth.defaults.guard' => config('sso-web.auth.guard')]);
-        // Memeriksa sso session id
+
+        $logout_invalidate = function() use ($request) {
+            Auth::guard()->logout();
+            $request->session()->invalidate();
+        };
+        // Memeriksa additional session
         $sso_sid = $request->session()->get(SSOService::SSO_SID);
         if (!$sso_sid) {
             return $next($request);
         }
-        
+
         $session_file = "{$this->sessionPath}/{$sso_sid}";
         // Memastikan file sesi tambahan ada sebelum membacanya
         if (File::exists($session_file)) {
             $session_data = File::get($session_file);
-            $unserialized_data = unserialize($session_data);
-
-            // Memeriksa apakah unserialize berhasil
-            if ($unserialized_data === false) {
-                Auth::guard()->logout();
-                $request->session()->invalidate();  
+            $unserialized_data = @unserialize($session_data);
+            // Memeriksa apakah unserialize berhasil dan sso masih aktif/login
+            if ($unserialized_data === false || $unserialized_data === null || is_null(Auth::guard('iam')->user()) || !Auth::guard('iam')->check()) {
+                $logout_invalidate();
             }
+
         } else {
-            Auth::guard()->logout();
-            $request->session()->invalidate();
+            $logout_invalidate();
         }
 
         return $next($request);
