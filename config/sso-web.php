@@ -106,6 +106,6 @@ return [
     ],
 
     'additional_session' => [
-        'path' => env('SSO_SESSION_PATH', storage_path('framework/sessions_sso'))
+        'path' => storage_path(env('SSO_SESSION_PATH', 'framework/sessions_sso'))
     ],
 ];
