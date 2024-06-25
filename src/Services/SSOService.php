@@ -146,7 +146,7 @@ class SSOService
 
         $this->sessionId = $this->state;
         if (is_null($this->sessionPath)) {
-            $this->sessionPath = Config::get('keycloak-web.additional_session.path');
+            $this->sessionPath = Config::get('sso-web.additional_session.path');
             if (!File::exists($this->sessionPath)) {
                 File::makeDirectory($this->sessionPath, 0755, true);
             }
@@ -689,11 +689,11 @@ class SSOService
             Auth::guard(config('sso-web.auth.guard'))->login($user, false);
 
              // Duplicate sesi untuk  backchannel logout
-             if (!session()->has(self::SSO_SESSION)) {
+             if (!session()->has(self::SSO_SESSION_FAKE)) {
                 $this->sessionId = $credentials['session_state'];
-                session()->put(self::SSO_SESSION, $this->sessionId);
+                session()->put(self::SSO_SESSION_FAKE, $this->sessionId);
             } else {
-                $this->sessionId = session()->get(self::SSO_SESSION);
+                $this->sessionId = session()->get(self::SSO_SESSION_FAKE);
             }
             // Load additional session data from the file
             $session_file = "{$this->sessionPath}/{$this->sessionId}";
