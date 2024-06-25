@@ -401,6 +401,9 @@ class SSOService
      */
     public function forgetToken()
     {
+        if (session()->has(self::SSO_SESSION_FAKE)) {
+            session()->forget(self::SSO_SESSION_FAKE);
+        }
         session()->forget(self::SSO_SESSION);
         session()->save();
     }
