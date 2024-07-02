@@ -13,6 +13,7 @@ use Illuminate\Contracts\Auth\UserProvider;
 use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
 use Illuminate\Support\Facades\File;
 use Julidev\LaravelSsoKeycloak\Services\SSOService;
+use Illuminate\Support\Facades\Auth;
 
 class SSOGuard implements Guard
 {
