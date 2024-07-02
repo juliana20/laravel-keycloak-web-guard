@@ -13,6 +13,7 @@ class SSOUser implements Authenticatable
      * @var array
      */
     protected $fillable = [
+        'sub',
         'name',
         'email'
     ];
@@ -58,7 +59,7 @@ class SSOUser implements Authenticatable
      */
     public function getKey()
     {
-        return $this->email;
+        return $this->sub;
     }
 
     /**
