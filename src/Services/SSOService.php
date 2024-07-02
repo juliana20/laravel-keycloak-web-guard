@@ -10,11 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Julidev\LaravelSsoKeycloak\Auth\SSOAccessToken;
-use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
-use Illuminate\Support\Facades\Auth;
 use Julidev\LaravelSsoKeycloak\Helpers\JWT;
 use Illuminate\Support\Facades\File;
-use Illuminate\Http\Request;
 
 class SSOService
 {
@@ -99,10 +96,6 @@ class SSOService
      */
     protected $httpClient;
 
-    protected $sessionId;
-    protected $sessionPath;
-    protected $request;
-
     /**
      * The Constructor
      * You can extend this service setting protected variables before call
@@ -111,7 +104,7 @@ class SSOService
      * @param ClientInterface $client
      * @return void
      */
-    public function __construct(ClientInterface $client, Request $request)
+    public function __construct(ClientInterface $client)
     {
         if (is_null($this->baseUrl)) {
             $this->baseUrl = trim(Config::get('sso-web.base_url'), '/');
@@ -143,15 +136,6 @@ class SSOService
 
         $this->state = $this->generateRandomState();
         $this->httpClient = $client;
-
-        $this->sessionId = $this->state;
-        if (is_null($this->sessionPath)) {
-            $this->sessionPath = Config::get('sso-web.additional_session.path');
-            if (!File::exists($this->sessionPath)) {
-                File::makeDirectory($this->sessionPath, 0755, true);
-            }
-        }
-        $this->request = $request;
     }
 
     /**
@@ -387,11 +371,6 @@ class SSOService
     {
         session()->put(self::SSO_SESSION, $credentials);
         session()->save();
-
-        // Login sesssion local apps
-        if(config('sso-web.authentication_defaults.enable')){
-            $this->authenticationToken($credentials);
-        }
     }
 
     /**
@@ -678,39 +657,7 @@ class SSOService
             Log::error('[SSO Service] ' . print_r($e, true));
         }
     }
-    
-    protected function authenticationToken($credentials)
-    {
-        $user_sso = $this->getUserProfile($credentials);
-        if(!empty( $user_sso )){
-            // login to local sesi
-            $user = config('sso-web.authentication_defaults.users_model')::where('user_id_sso', $user_sso['sub'])->first();
-            if(empty($user)){
-                throw new SSOCallbackException('User SSO belum di mapping dengan user '.env('APP_NAME', 'Aplikasi'));
-            }
 
-            Auth::guard(config('sso-web.auth.guard'))->login($user, false);
-
-             // Duplicate sesi untuk  backchannel logout
-             if (!session()->has(self::SSO_SID)) {
-                $this->sessionId = $credentials['session_state'];
-                session()->put(self::SSO_SID, $this->sessionId);
-            } else {
-                $this->sessionId = session()->get(self::SSO_SID);
-            }
-            // Load additional session data from the file
-            $session_file = "{$this->sessionPath}/{$this->sessionId}";
-            $additional_session = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
-    
-            // Make additional session data available in the request
-            $this->request->attributes->set('additional_session', $additional_session);
-            $this->request->attributes->set('additional_session', session()->all());
-    
-            // Save additional session data back to the file
-            $additional_session = $this->request->attributes->get('additional_session');
-            File::put($session_file, serialize($additional_session));
-        }
-    }
     public function introspectionEndpoint($credentials)
     {
         if(empty($credentials)){

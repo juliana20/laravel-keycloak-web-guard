@@ -11,6 +11,8 @@ use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
 use Julidev\LaravelSsoKeycloak\Models\SSOUser;
 use Illuminate\Contracts\Auth\UserProvider;
 use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
+use Illuminate\Support\Facades\File;
+use Julidev\LaravelSsoKeycloak\Services\SSOService;
 
 class SSOGuard implements Guard
 {
@@ -18,6 +20,8 @@ class SSOGuard implements Guard
      * @var null|Authenticatable|SSOUser
      */
     protected $user;
+    protected $sessionId;
+    protected $sessionPath;
 
     /**
      * Constructor.
@@ -28,6 +32,12 @@ class SSOGuard implements Guard
     {
         $this->provider = $provider;
         $this->request = $request;
+        if (is_null($this->sessionPath)) {
+            $this->sessionPath = Config::get('sso-web.additional_session.path');
+            if (!File::exists($this->sessionPath)) {
+                File::makeDirectory($this->sessionPath, 0755, true);
+            }
+        }
     }
 
     /**
@@ -143,6 +153,44 @@ class SSOGuard implements Guard
         // Provide User
         $user = $this->provider->retrieveByCredentials($user);
         $this->setUser($user);
+
+        // Login session local apps
+        if(config('sso-web.authentication_defaults.enable')){
+            return $this->authenticateImpersonate($credentials, $user);
+        }
+
+        return true;
+    }
+
+    public function authenticateImpersonate($credentials, $user)
+    {
+        $user_apps = config('sso-web.authentication_defaults.users_model')::where('user_id_sso', $user->id)->first();
+        if(empty($user_apps)){
+             if (Config::get('app.debug', false)) {
+                throw new SSOCallbackException('SSO users have not been mapped.');
+            }
+
+            return false;
+        }
+        Auth::guard(config('sso-web.auth.guard'))->login($user_apps, false);
+        // duplicate session untuk sso
+        if (!session()->has(SSOService::SSO_SID)) {
+            $this->sessionId = $credentials['session_state'];
+            session()->put(SSOService::SSO_SID, $this->sessionId);
+        } else {
+            $this->sessionId = session()->get(SSOService::SSO_SID);
+        }
+        // Load additional session data from the file
+        $session_file = "{$this->sessionPath}/{$this->sessionId}";
+        $additional_session = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
+
+        // Make additional session data available in the request
+        $this->request->attributes->set('additional_session', $additional_session);
+        $this->request->attributes->set('additional_session', session()->all());
+
+        // Save additional session data back to the file
+        $additional_session = $this->request->attributes->get('additional_session');
+        File::put($session_file, serialize($additional_session));
 
         return true;
     }

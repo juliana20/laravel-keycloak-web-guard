@@ -12,9 +12,9 @@ This packages allow you authenticate users with [Keycloak Server](https://www.ke
 This package was tested with:
 
 * Laravel Framework: 5.5 / 7 / 8 / 9 [Laravel Installation](https://laravel.com/)
-* Keycloak Server: 22.0.4 [Keycloak Server Version 22.0.4](https://www.keycloak.org/archive/downloads-22.0.4.html)
+* Keycloak Server: 24.0.4 [Keycloak Server Version 24.0.4](https://www.keycloak.org/archive/downloads-24.0.4.html)
 
-Any other version is not guaranteed to work.
+Any other Keycloak Server version is not guaranteed to work.
 
 *This is project is open source and maintained on my free time. So, if you have any problem you can open a Issue with all details (laravel version, keycloak version, the description of problem...) and I'll be happy to try to help.*
 
