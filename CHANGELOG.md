@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ### [3.0.1] - 2022-09-28
 
-* Fix #79 (looping on SSORole error). (props: @andrex47)
+* Fix #79 (looping on Role error). (props: @andrex47)
 
 ### [3.0.0] - 2022-09-23
 
@@ -50,7 +50,7 @@ He did a responsible disclosure to sending a e-mail and we are very grateful (I 
 * OpenID configuration refactored.
 
 We'll request only if necessary.
-It's a breaking change if you extend **Services/SSOService.php**.
+It's a breaking change if you extend **Services/IAMService.php**.
 
 Props: @matthewhall-ca
 

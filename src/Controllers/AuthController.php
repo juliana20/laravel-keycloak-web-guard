@@ -5,8 +5,8 @@ namespace Julidev\LaravelSsoKeycloak\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
-use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
+use Julidev\LaravelSsoKeycloak\Exceptions\CallbackException;
+use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
 
 class AuthController extends Controller
 {
@@ -17,8 +17,8 @@ class AuthController extends Controller
      */
     public function login()
     {
-        $url = SSOBadung::getLoginUrl();
-        SSOBadung::saveState();
+        $url = IAMBadung::getLoginUrl();
+        IAMBadung::saveState();
 
         return redirect($url);
     }
@@ -30,8 +30,8 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        $url = SSOBadung::getLogoutUrl();
-        SSOBadung::forgetToken();
+        $url = IAMBadung::getLogoutUrl();
+        IAMBadung::forgetToken();
         return redirect($url);
     }
 
@@ -42,14 +42,14 @@ class AuthController extends Controller
      */
     public function register()
     {
-        $url = SSOBadung::getRegisterUrl();
+        $url = IAMBadung::getRegisterUrl();
         return redirect($url);
     }
 
     /**
      * Keycloak callback page
      *
-     * @throws SSOCallbackException
+     * @throws CallbackException
      *
      * @return view
      */
@@ -60,21 +60,21 @@ class AuthController extends Controller
             $error = $request->input('error_description');
             $error = ($error) ?: $request->input('error');
 
-            throw new SSOCallbackException($error);
+            throw new CallbackException($error);
         }
 
         // Check given state to mitigate CSRF attack
         $state = $request->input('state');
-        if (empty($state) || ! SSOBadung::validateState($state)) {
-            SSOBadung::forgetState();
+        if (empty($state) || ! IAMBadung::validateState($state)) {
+            IAMBadung::forgetState();
 
-            throw new SSOCallbackException('Invalid state');
+            throw new CallbackException('Invalid state');
         }
 
         // Change code for token
         $code = $request->input('code');
         if (! empty($code)) {
-            $token = SSOBadung::getAccessToken($code);
+            $token = IAMBadung::getAccessToken($code);
 
             if (Auth::validate($token)) {
                 $url = config('sso-web.redirect_url', '/admin');

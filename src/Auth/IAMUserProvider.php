@@ -5,7 +5,7 @@ namespace Julidev\LaravelSsoKeycloak\Auth;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
 
-class SSOUserProvider implements UserProvider
+class IAMUserProvider implements UserProvider
 {
     /**
      * The user model.

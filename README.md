@@ -38,7 +38,7 @@ composer require julidev/laravel-sso-keycloak
 If you want to change routes or the default values for Keycloak, publish the config file:
 
 ```
-php artisan vendor:publish  --provider="Julidev\LaravelSsoKeycloak\SsoGuardServiceProvider"
+php artisan vendor:publish  --provider="Julidev\LaravelSsoKeycloak\IAMGuardServiceProvider"
 
 ```
 
@@ -97,10 +97,10 @@ Just add the options you would like as an array to the" to "Just add the options
 
 ## Laravel Auth
 
-You should add SsoGuardServiceProvider to your `config/app.php`.
+You should add IAMGuardServiceProvider to your `config/app.php`.
 
 ```
-Julidev\LaravelSsoKeycloak\SsoGuardServiceProvider::class
+Julidev\LaravelSsoKeycloak\IAMGuardServiceProvider::class
 
 ```
 
@@ -134,7 +134,7 @@ As my default is web, I add to it:
     'providers' => [
         'users-iam' => [
             'driver'    => 'sso-users',
-            'model'     => Julidev\LaravelSsoKeycloak\Models\SSOUser::class,
+            'model'     => Julidev\LaravelSsoKeycloak\Models\IAMUser::class,
         ],
     ],
 ],
@@ -210,7 +210,7 @@ You can extend it and register your own middleware on Kernel.php or just use `Au
 
 We registered a new user provider that you configured on `config/sso-web.php` called "sso-users".
 
-In this same configuration you setted the model. So you can register your own model extending `Julidev\LaravelSsoKeycloak\Models\SSOUser` class and changing this configuration.
+In this same configuration you setted the model. So you can register your own model extending `Julidev\LaravelSsoKeycloak\Models\IAMUser` class and changing this configuration.
 
 You can implement your own [User Provider](https://laravel.com/docs/7.x/authentication#adding-custom-user-providers): just remember to implement the `retrieveByCredentials` method receiving the Keycloak Profile information to retrieve a instance of model.
 
@@ -251,7 +251,7 @@ State is a unique and non-guessable string used to mitigate CSRF attacks.
 
 We associate each authentication request about to be initiated with one random state and check on callback. You should do it if you are extending/implementing your own Auth controller.
 
-Use `SSOBadung::saveState()` method to save the already generated state to session and `SSOBadung::validateState()` to check the current state against the saved one.
+Use `IAMBadung::saveState()` method to save the already generated state to session and `IAMBadung::validateState()` to check the current state against the saved one.
 
 ### I'm having problems with session (stuck on login loop)
 

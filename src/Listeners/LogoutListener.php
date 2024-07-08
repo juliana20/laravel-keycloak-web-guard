@@ -3,7 +3,7 @@
 namespace Julidev\LaravelSsoKeycloak\Listeners;
 
 use Illuminate\Auth\Events\Logout;
-use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
+use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
 
 class LogoutListener
 {
@@ -24,6 +24,6 @@ class LogoutListener
      */
     public function handle(Logout $event)
     {
-        SSOBadung::logoutToken();
+        IAMBadung::logoutToken();
     }
 }

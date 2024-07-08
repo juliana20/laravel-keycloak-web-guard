@@ -22,10 +22,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Julidev\\LaravelSsoKeycloak\\SsoGuardServiceProvider"
+                "Julidev\\LaravelSsoKeycloak\\IAMGuardServiceProvider"
             ],
             "aliases": {
-                "SSOBadung": "Julidev\\LaravelSsoKeycloak\\Facades\\SSOBadung"
+                "IAMBadung": "Julidev\\LaravelSsoKeycloak\\Facades\\IAMBadung"
             }
         }
     }

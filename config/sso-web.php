@@ -88,7 +88,7 @@ return [
         'providers' => [
             'users-iam' => [
                 'driver'    => 'sso-users',
-                'model'     => Julidev\LaravelSsoKeycloak\Models\SSOUser::class,
+                'model'     => Julidev\LaravelSsoKeycloak\Models\IAMUser::class,
             ],
         ],
     ],
@@ -105,7 +105,7 @@ return [
         'users_model' => App\User::class,
     ],
 
-    'additional_session' => [
+    'session_impersonate' => [
         'path' => storage_path(env('SSO_SESSION_PATH', 'framework/sessions_sso'))
     ],
 ];

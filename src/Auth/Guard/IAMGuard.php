@@ -6,19 +6,19 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Julidev\LaravelSsoKeycloak\Auth\SSOAccessToken;
-use Julidev\LaravelSsoKeycloak\Exceptions\SSOCallbackException;
-use Julidev\LaravelSsoKeycloak\Models\SSOUser;
+use Julidev\LaravelSsoKeycloak\Auth\AccessToken;
+use Julidev\LaravelSsoKeycloak\Exceptions\CallbackException;
+use Julidev\LaravelSsoKeycloak\Models\IAMUser;
 use Illuminate\Contracts\Auth\UserProvider;
-use Julidev\LaravelSsoKeycloak\Facades\SSOBadung;
+use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
 use Illuminate\Support\Facades\File;
-use Julidev\LaravelSsoKeycloak\Services\SSOService;
+use Julidev\LaravelSsoKeycloak\Services\IAMService;
 use Illuminate\Support\Facades\Auth;
 
-class SSOGuard implements Guard
+class IAMGuard implements Guard
 {
     /**
-     * @var null|Authenticatable|SSOUser
+     * @var null|Authenticatable|IAMUser
      */
     protected $user;
     protected $sessionId;
@@ -34,7 +34,7 @@ class SSOGuard implements Guard
         $this->provider = $provider;
         $this->request = $request;
         if (is_null($this->sessionPath)) {
-            $this->sessionPath = Config::get('sso-web.additional_session.path');
+            $this->sessionPath = Config::get('sso-web.session_impersonate.path');
             if (!File::exists($this->sessionPath)) {
                 File::makeDirectory($this->sessionPath, 0755, true);
             }
@@ -121,7 +121,7 @@ class SSOGuard implements Guard
          * Store the section
          */
         $credentials['refresh_token'] = $credentials['refresh_token'] ?? '';
-        SSOBadung::saveToken($credentials);
+        IAMBadung::saveToken($credentials);
 
         return $this->authenticate();
     }
@@ -129,23 +129,23 @@ class SSOGuard implements Guard
     /**
      * Try to authenticate the user
      *
-     * @throws SSOCallbackException
+     * @throws CallbackException
      * @return boolean
      */
     public function authenticate()
     {
         // Get Credentials
-        $credentials = SSOBadung::retrieveToken();
+        $credentials = IAMBadung::retrieveToken();
         if (empty($credentials)) {
             return false;
         }
 
-        $user = SSOBadung::getUserProfile($credentials);
+        $user = IAMBadung::getUserProfile($credentials);
         if (empty($user)) {
-            SSOBadung::forgetToken();
+            IAMBadung::forgetToken();
 
             // if (Config::get('app.debug', false)) {
-            //     throw new SSOCallbackException('User cannot be authenticated.');
+            //     throw new CallbackException('User cannot be authenticated.');
             // }
 
             return false;
@@ -168,30 +168,30 @@ class SSOGuard implements Guard
         $user_apps = config('sso-web.authentication_defaults.users_model')::where('user_id_sso', $user->id)->first();
         if(empty($user_apps)){
              if (Config::get('app.debug', false)) {
-                throw new SSOCallbackException('SSO users have not been mapped.');
+                throw new CallbackException('[SSO Guard] users have not been mapped.');
             }
 
             return false;
         }
         Auth::guard(config('sso-web.auth.guard'))->login($user_apps, false);
         // duplicate session untuk sso
-        if (!session()->has(SSOService::SSO_SID)) {
+        if (!session()->has(IAMService::SSO_SID)) {
             $this->sessionId = $credentials['session_state'];
-            session()->put(SSOService::SSO_SID, $this->sessionId);
+            session()->put(IAMService::SSO_SID, $this->sessionId);
         } else {
-            $this->sessionId = session()->get(SSOService::SSO_SID);
+            $this->sessionId = session()->get(IAMService::SSO_SID);
         }
         // Load additional session data from the file
         $session_file = "{$this->sessionPath}/{$this->sessionId}";
-        $additional_session = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
+        $session_impersonate = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
 
         // Make additional session data available in the request
-        $this->request->attributes->set('additional_session', $additional_session);
-        $this->request->attributes->set('additional_session', session()->all());
+        $this->request->attributes->set('session_impersonate', $session_impersonate);
+        $this->request->attributes->set('session_impersonate', session()->all());
 
         // Save additional session data back to the file
-        $additional_session = $this->request->attributes->get('additional_session');
-        File::put($session_file, serialize($additional_session));
+        $session_impersonate = $this->request->attributes->get('session_impersonate');
+        File::put($session_file, serialize($session_impersonate));
 
         return true;
     }
@@ -213,13 +213,13 @@ class SSOGuard implements Guard
             return false;
         }
 
-        $token = SSOBadung::retrieveToken();
+        $token = IAMBadung::retrieveToken();
 
         if (empty($token) || empty($token['access_token'])) {
             return false;
         }
 
-        $token = new SSOAccessToken($token);
+        $token = new AccessToken($token);
         $token = $token->parseAccessToken();
 
         $resourceRoles = $token['resource_access'] ?? [];

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static getUserProfile(array $credentials)
  * @method static forgetToken()
  */
-class SSOBadung extends Facade
+class IAMBadung extends Facade
 {
     /**
      * Get the registered name of the component.
@@ -20,6 +20,6 @@ class SSOBadung extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return 'sso-badung';
+        return 'iam-badung';
     }
 }

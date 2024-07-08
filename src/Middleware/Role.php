@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
 
-class SSORole extends Authenticated
+class Role extends Authenticated
 {
     /**
      * Handle an incoming request.

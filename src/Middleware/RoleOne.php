@@ -7,7 +7,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
 use Julidev\LaravelSsoKeycloak\Middleware\Authenticated;
 
-class SSORoleOne extends Authenticated
+class RoleOne extends Authenticated
 {
     /**
      * Handle an incoming request.
