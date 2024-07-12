@@ -4,7 +4,6 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class IAMAuthenticated
 {
@@ -18,7 +17,7 @@ class IAMAuthenticated
      */
     public function handle(Request $request, Closure $next)
     {
-        if (empty($guards) && Auth::check()) {
+        if (empty($guards) && auth('iam')->check()) {
             return $next($request);
         }
 

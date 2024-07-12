@@ -4,9 +4,8 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\Auth;
 
-class Role extends Authenticated
+class Role
 {
     /**
      * Handle an incoming request.
@@ -18,12 +17,12 @@ class Role extends Authenticated
      */
     public function handle($request, Closure $next, ...$guards)
     {
-        if (empty($guards) && Auth::check()) {
+        if (empty($guards) && auth('iam')->check()) {
             return $next($request);
         }
 
         $guards = explode('|', ($guards[0] ?? ''));
-        if (Auth::hasRole($guards)) {
+        if (auth('iam')->hasRole($guards)) {
             return $next($request);
         }
 

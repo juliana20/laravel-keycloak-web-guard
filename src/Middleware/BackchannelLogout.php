@@ -3,7 +3,6 @@
 namespace Julidev\LaravelSsoKeycloak\Middleware;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Julidev\LaravelSsoKeycloak\Services\IAMService;
 
@@ -16,13 +15,10 @@ class BackchannelLogout
         $this->sessionPath = config('sso-web.session_impersonate.path');
     }
 
-
     public function handle(Request $request, \Closure $next)
     {
-        \config(['auth.defaults.guard' => config('sso-web.auth.guard')]);
-
         $logout_invalidate = function() use ($request) {
-            Auth::guard()->logout();
+            auth(config('sso-web.auth.guard'))->logout();
             $request->session()->invalidate();
         };
         // Memeriksa additional session
@@ -37,7 +33,7 @@ class BackchannelLogout
             $session_data = File::get($session_file);
             $unserialized_data = @unserialize($session_data);
             // Memeriksa apakah unserialize berhasil dan sso masih aktif/login
-            if ($unserialized_data === false || $unserialized_data === null || is_null(Auth::guard('iam')->user()) || !Auth::guard('iam')->check()) {
+            if ($unserialized_data === false || $unserialized_data === null || is_null(auth('iam')->user()) || !auth('iam')->check()) {
                 $logout_invalidate();
             }
 
