@@ -17,7 +17,7 @@ class IAMAuthenticated
      */
     public function handle(Request $request, Closure $next)
     {
-        if (empty($guards) && auth('iam-badung')->check()) {
+        if (empty($guards) && auth('iam')->check()) {
             return $next($request);
         }
 

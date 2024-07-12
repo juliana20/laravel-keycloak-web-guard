@@ -45,7 +45,7 @@ class IAMGuardServiceProvider extends ServiceProvider
         });
 
         // Gate
-        Gate::define('iam-badung', function ($user, $roles, $resource = '') {
+        Gate::define('sso-web', function ($user, $roles, $resource = '') {
             return $user->hasRole($roles, $resource) ?: null;
         });
     }
@@ -58,7 +58,7 @@ class IAMGuardServiceProvider extends ServiceProvider
     public function register()
     {
         // Keycloak Web Guard
-        Auth::extend('iam-badung', function ($app, $name, array $config) {
+        Auth::extend('sso-web', function ($app, $name, array $config) {
             $provider = Auth::createUserProvider($config['provider']);
             return new IAMGuard($provider, $app->request);
         });
@@ -97,7 +97,7 @@ class IAMGuardServiceProvider extends ServiceProvider
      */
     private function registerRoutes()
     {
-        // \config(['auth.defaults.guard' => 'iam']);
+        \config(['auth.defaults.guard' => 'iam']);
         
         $defaults = [
             'login' => 'login',

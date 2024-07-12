@@ -18,13 +18,13 @@ class RoleOne
      */
     public function handle($request, Closure $next, ...$guards)
     {
-        if (empty($guards) && auth('iam-badung')->check()) {
+        if (empty($guards) && auth('iam')->check()) {
             return $next($request);
         }
 
         $guards = explode('|', ($guards[0] ?? ''));
         foreach ($guards as $guard) {
-            if (auth('iam-badung')->hasRole($guard)) {
+            if (auth('iam')->hasRole($guard)) {
                 return $next($request);
             }
         }
