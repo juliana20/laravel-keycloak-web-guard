@@ -33,7 +33,7 @@ class BackchannelLogout
             $session_data = File::get($session_file);
             $unserialized_data = @unserialize($session_data);
             // Memeriksa apakah unserialize berhasil dan sso masih aktif/login
-            if ($unserialized_data === false || $unserialized_data === null || is_null(auth('iam')->user()) || !auth('iam')->check()) {
+            if ($unserialized_data === false || $unserialized_data === null || is_null(auth('iam-badung')->user()) || !auth('iam-badung')->check()) {
                 $logout_invalidate();
             }
 

@@ -17,12 +17,12 @@ class Role
      */
     public function handle($request, Closure $next, ...$guards)
     {
-        if (empty($guards) && auth('iam')->check()) {
+        if (empty($guards) && auth('iam-badung')->check()) {
             return $next($request);
         }
 
         $guards = explode('|', ($guards[0] ?? ''));
-        if (auth('iam')->hasRole($guards)) {
+        if (auth('iam-badung')->hasRole($guards)) {
             return $next($request);
         }
 
