@@ -97,7 +97,7 @@ class IAMGuardServiceProvider extends ServiceProvider
      */
     private function registerRoutes()
     {
-        // \config(['auth.defaults.guard' => 'iam']);
+        \config(['auth.defaults.guard' => 'iam']);
         
         $defaults = [
             'login' => 'login',
