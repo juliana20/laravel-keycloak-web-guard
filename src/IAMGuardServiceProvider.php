@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Logout;
 use Julidev\LaravelSsoKeycloak\Listeners\LogoutListener;
 use Illuminate\Http\Request;
+use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
 
 class IAMGuardServiceProvider extends ServiceProvider
 {
@@ -86,7 +87,7 @@ class IAMGuardServiceProvider extends ServiceProvider
             return new Client(Config::get('sso-web.guzzle_options', []));
         });
 
-        // Event logout & login
+        // Event logout
         Event::listen(Logout::class, LogoutListener::class);
     }
 
@@ -141,7 +142,7 @@ class IAMGuardServiceProvider extends ServiceProvider
             $router->post($routes['backchannel'], function(Request $request){
                 // get logout token from keycloak server
                 $logout_token = $request->input('logout_token');
-                IAMService::logoutBackchannel($logout_token);
+                IAMBadung::logoutBackchannel($logout_token);
             });
         }
     }
