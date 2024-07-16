@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Julidev\LaravelSsoKeycloak\Auth\AccessToken;
-use Julidev\LaravelSsoKeycloak\Helpers\JWT;
 use Illuminate\Support\Facades\File;
+use Julidev\LaravelSsoKeycloak\Exceptions\CallbackException;
 
 class IAMService
 {
@@ -134,7 +134,7 @@ class IAMService
             $this->redirectLogout = Config::get('sso-web.redirect_logout');
         }
 
-        $this->state = $this->generateRandomState();
+        $this->state = generate_random_state();
         $this->httpClient = $client;
     }
 
@@ -156,7 +156,7 @@ class IAMService
             'state' => $this->getState(),
         ];
 
-        return $this->buildUrl($url, $params);
+        return build_url($url, $params);
     }
 
     /**
@@ -181,7 +181,7 @@ class IAMService
             $params['id_token_hint'] = $token['id_token'];
         }
 
-        return $this->buildUrl($url, $params);
+        return build_url($url, $params);
     }
 
     /**
@@ -226,7 +226,7 @@ class IAMService
                 $token = json_decode($token, true);
             }
         } catch (GuzzleException $e) {
-            $this->logException($e);
+            log_exception($e);
         }
 
         return $token;
@@ -266,7 +266,7 @@ class IAMService
                 $token = json_decode($token, true);
             }
         } catch (GuzzleException $e) {
-            $this->logException($e);
+            log_exception($e);
         }
 
         return $token;
@@ -294,7 +294,7 @@ class IAMService
             $response = $this->httpClient->request('POST', $url, ['form_params' => $params]);
             return $response->getStatusCode() === 204;
         } catch (GuzzleException $e) {
-            $this->logException($e);
+            log_exception($e);
         }
 
         return false;
@@ -315,7 +315,7 @@ class IAMService
             $token = new AccessToken($credentials);
 
             if (empty($token->getAccessToken())) {
-                throw new Exception('[SSO Service] Access Token is invalid.');
+                throw new CallbackException('Access Token is invalid.');
             }
 
             $claims = array(
@@ -335,7 +335,7 @@ class IAMService
             $response = $this->httpClient->request('GET', $url, ['headers' => $headers]);
 
             if ($response->getStatusCode() !== 200) {
-                throw new Exception('[SSO Service] Was not able to get userinfo (not 200)');
+                throw new CallbackException('Was not able to get userinfo (not 200)');
             }
 
             $user = $response->getBody()->getContents();
@@ -344,7 +344,7 @@ class IAMService
             // Validate retrieved user is owner of token
             $token->validateSub($user['sub'] ?? '');
         } catch (GuzzleException $e) {
-            $this->logException($e);
+            log_exception($e);
         } catch (Exception $e) {
             Log::error('[SSO Service] ' . print_r($e->getMessage(), true));
         }
@@ -487,9 +487,8 @@ class IAMService
                 $configuration = json_decode($configuration, true);
             }
         } catch (GuzzleException $e) {
-            $this->logException($e);
-
-            throw new Exception('[SSO Service] It was not possible to load OpenId configuration: ' . $e->getMessage());
+            log_exception($e);
+            throw new CallbackException('It was not possible to load OpenId configuration: ' . $e->getMessage());
         }
 
         // Save cache
@@ -526,38 +525,6 @@ class IAMService
 
         $this->saveToken($credentials);
         return $credentials;
-    }
-
-    /**
-     * Log a GuzzleException
-     *
-     * @param  GuzzleException $e
-     * @return void
-     */
-    protected function logException(GuzzleException $e)
-    {
-        // Guzzle 7
-        if (! method_exists($e, 'getResponse') || empty($e->getResponse())) {
-            Log::error('[SSO Service] ' . $e->getMessage());
-            return;
-        }
-
-        $error = [
-            'request' => method_exists($e, 'getRequest') ? $e->getRequest() : '',
-            'response' => $e->getResponse()->getBody()->getContents(),
-        ];
-
-        Log::error('[SSO Service] ' . print_r($error, true));
-    }
-
-    /**
-     * Return a random state parameter for authorization
-     *
-     * @return string
-     */
-    protected function generateRandomState()
-    {
-        return bin2hex(random_bytes(16));
     }
 
     public function logoutToken()
@@ -600,7 +567,7 @@ class IAMService
             }
             
         } catch (GuzzleException $e) {
-            $this->logException($e);
+            log_exception($e);
         }
 
         return $response;
@@ -614,12 +581,12 @@ class IAMService
             // membagi token JWT menjadi tiga bagian
             list($header_encoded, $payload_encoded, $signature_encoded) = explode('.', $logout_token);
             // decode JWT
-            $header = json_decode(JWT::base64UrlDecode($header_encoded), true);
-            $payload = json_decode(JWT::base64UrlDecode($payload_encoded), true);
-            $signature = JWT::base64UrlDecode($signature_encoded);
+            $header = json_decode(base64_url_decode($header_encoded), true);
+            $payload = json_decode(base64_url_decode($payload_encoded), true);
+            $signature = base64_url_decode($signature_encoded);
             // verifikasi algorithm
             if ($header['alg'] !== 'RS256') {
-                throw new Exception('[SSO Service] Unsupported algorithm');
+                throw new CallbackException('Unsupported algorithm');
             }
             // verifikasi signature
             $verify_signature = function ($input, $signature, $key) {
@@ -634,7 +601,7 @@ class IAMService
             if ($is_valid) {
                 // jika Signature valid, proses payload
                 $decoded_array = (array) $payload;
-                Log::info('[SSO Service] Logout Berhasil!'.'-'. json_encode($decoded_array));
+                Log::info('[SSO Service] SSO Logout'. json_encode($decoded_array));
                 // pengecekan jika 'sid' ada di payload
                 if (isset($decoded_array['sid'])) {
                     // mengambil ID sesi tambahan dari session
@@ -648,9 +615,8 @@ class IAMService
                         }
                     }
                 }
-            } else {
-                // signature invalid
-                throw new Exception('[SSO Service] Invalid token signature');
+            } else { // signature invalid
+                throw new CallbackException('Invalid token signature');
             }
         
         } catch (\Exception $e) {
@@ -689,56 +655,9 @@ class IAMService
             }
             
         } catch (GuzzleException $e) {
-            $this->logException($e);
+            log_exception($e);
         }
 
         return $response;
-    }
-
-        /**
-     * Build a URL with params
-     *
-     * @param  string $url
-     * @param  array $params
-     * @return string
-     */
-   
-    public function buildUrl($url, $params)
-    {
-        $parsedUrl = parse_url($url);
-        if (empty($parsedUrl['host'])) {
-            return trim($url, '?') . '?' . http_build_query($params);
-        }
-
-        if (! empty($parsedUrl['port'])) {
-            $parsedUrl['host'] .= ':' . $parsedUrl['port'];
-        }
-
-        $parsedUrl['scheme'] = (empty($parsedUrl['scheme'])) ? 'https' : $parsedUrl['scheme'];
-        $parsedUrl['path'] = (empty($parsedUrl['path'])) ? '' : $parsedUrl['path'];
-
-        $url = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
-        $query = [];
-
-        if (! empty($parsedUrl['query'])) {
-            $parsedUrl['query'] = explode('&', $parsedUrl['query']);
-
-            foreach ($parsedUrl['query'] as $value) {
-                $value = explode('=', $value);
-
-                if (count($value) < 2) {
-                    continue;
-                }
-
-                $key = array_shift($value);
-                $value = implode('=', $value);
-
-                $query[$key] = urldecode($value);
-            }
-        }
-
-        $query = array_merge($query, $params);
-
-        return $url . '?' . http_build_query($query);
     }
 }

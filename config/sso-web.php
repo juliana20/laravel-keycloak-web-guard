@@ -6,7 +6,7 @@ return [
      *
      * Generally https://your-server.com/auth
      */
-    'base_url' => env('KEYCLOAK_BASE_URL', ''),
+    'base_url' => env('KEYCLOAK_BASE_URL', 'http://localhost:8080'),
 
     /**
      * Keycloak Realm
@@ -75,9 +75,9 @@ return [
         'verify' => false
    ],
 
-   // Custom Guards for SSO
+   // Add Custom Guards for IAM Badung (SSO)
    'auth' => [
-        'guard' => 'admin', // guard auth default local apps
+        'guard' => 'admin', // guard default aplikasi laravel
 
         'guards' => [
             'iam' => [
@@ -88,23 +88,20 @@ return [
         'providers' => [
             'users-iam' => [
                 'driver'    => 'sso-users',
-                'model'     => Julidev\LaravelSsoKeycloak\Models\IAMUser::class,
+                'model'     => Julidev\LaravelSsoKeycloak\Models\IAMUser::class, #model SSO keycloak
             ],
         ],
     ],
 
-    // Custom auth default for User SSO
+    // Set jika menggunakan session login aplikasi laravel ( 2 sesi)
     'authentication_defaults' => [
-
         'enable' => env('KEYCLOAK_AUTH_DEFAULTS', true),
-        // Database connection for following tables.
-        'connection' => '',
-
-        // User tables and model.
+        // User tabel dan model aplikasi laravel.
         'users_table' => 'users',
         'users_model' => App\User::class,
     ],
 
+    // Set path session tiruan SSO
     'session_impersonate' => [
         'path' => storage_path(env('SSO_SESSION_PATH', 'framework/sessions_sso'))
     ],

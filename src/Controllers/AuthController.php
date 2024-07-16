@@ -77,7 +77,7 @@ class AuthController extends Controller
             $token = IAMBadung::getAccessToken($code);
 
             if (Auth::validate($token)) {
-                $url = config('sso-web.redirect_url', '/admin');
+                $url = config('sso-web.redirect_url');
                 return redirect()->intended($url);
             }
         }
