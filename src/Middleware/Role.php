@@ -22,8 +22,10 @@ class Role
         }
 
         $guards = explode('|', ($guards[0] ?? ''));
-        if (auth('iam')->hasRole($guards)) {
-            return $next($request);
+        foreach ($guards as $guard) {
+            if (auth('iam')->hasRole($guard)) {
+                return $next($request);
+            }
         }
 
         throw new AuthorizationException('Forbidden', 403);

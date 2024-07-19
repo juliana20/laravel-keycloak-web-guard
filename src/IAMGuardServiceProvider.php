@@ -82,8 +82,8 @@ class IAMGuardServiceProvider extends ServiceProvider
             Authenticate::class, // Custom Middleware
         ]);
 
-        // Add Middleware "sso-web-can"
-        $this->app['router']->aliasMiddleware('sso-web-can', Role::class);
+        // Add Middleware "sso-role"
+        $this->app['router']->aliasMiddleware('sso-role', Role::class);
         $this->app['router']->aliasMiddleware('sso', IAMAuthenticated::class);
 
         // Bind for client data

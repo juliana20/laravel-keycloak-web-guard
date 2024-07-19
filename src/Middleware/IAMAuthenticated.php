@@ -28,11 +28,11 @@ class IAMAuthenticated
         }
 
         $session_file = "{$this->sessionPath}/{$sso_sid}";
-        // Memeriksa jika session file SSO tidak ada maka keluar sesi
+        // Memeriksa jika session file SSO tidak ada, maka keluar sesi
         if (!File::exists($session_file)) {
             $logout_invalidate();
         }
-        // Memastikan file sesi tambahan ada sebelum membacanya isinya
+        // Memastikan file sesi tambahan ada sebelum mengecek isinya
         if (File::exists($session_file)) {
             $session_data = File::get($session_file);
             $unserialized_data = @unserialize($session_data);
