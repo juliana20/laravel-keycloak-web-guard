@@ -24,6 +24,7 @@ class IAMAuthenticated
         // Memeriksa apakah additional session tersedia
         $sso_sid = $request->session()->get(IAMService::SSO_SID);
         if (!$sso_sid) {
+            $logout_invalidate();
             return $next($request);
         }
 
