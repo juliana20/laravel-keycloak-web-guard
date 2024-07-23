@@ -12,7 +12,6 @@ use Julidev\LaravelSsoKeycloak\Models\IAMUser;
 use Illuminate\Contracts\Auth\UserProvider;
 use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
 use Julidev\LaravelSsoKeycloak\Services\IAMService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Access\AuthorizationException;
 
 class IAMGuard implements Guard
@@ -172,7 +171,7 @@ class IAMGuard implements Guard
             }
             return false;
         }
-        Auth::guard(config('sso-web.auth.guard'))->login($user_apps, false);
+        auth()->guard(config('sso-web.auth.guard'))->login($user_apps, false);
         // duplicate session untuk sso
         if (!session()->has(IAMService::SSO_SID)) {
             $this->sessionId = $credentials['session_state'];
@@ -182,27 +181,15 @@ class IAMGuard implements Guard
         }
         // Load additional session data from the file
         $session_file = "{$this->sessionPath}/{$this->sessionId}";
+        $session_impersonate = [];
         if (file_exists($session_file)) {
             $session_data = file_get_contents($session_file);
             $session_impersonate = $session_data ? unserialize($session_data) : [];
         }
-        
-        // Make additional session data available in the session
-        $_SESSION['session_impersonate'] = array_merge($session_impersonate, $_SESSION);
-        
         // Save additional session data back to the file
-        $session_impersonate = $_SESSION['session_impersonate'];
+        $this->request->attributes->set('session_impersonate', array_merge($session_impersonate, session()->all()));
+        $session_impersonate = $this->request->attributes->get('session_impersonate');
         file_put_contents($session_file, serialize($session_impersonate));
-
-        // $session_impersonate = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
-
-        // // Make additional session data available in the request
-        // $this->request->attributes->set('session_impersonate', $session_impersonate);
-        // $this->request->attributes->set('session_impersonate', session()->all());
-
-        // // Save additional session data back to the file
-        // $session_impersonate = $this->request->attributes->get('session_impersonate');
-        // File::put($session_file, serialize($session_impersonate));
 
         return true;
     }
