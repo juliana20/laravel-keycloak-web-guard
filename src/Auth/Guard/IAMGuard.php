@@ -11,7 +11,6 @@ use Julidev\LaravelSsoKeycloak\Exceptions\CallbackException;
 use Julidev\LaravelSsoKeycloak\Models\IAMUser;
 use Illuminate\Contracts\Auth\UserProvider;
 use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
-use Illuminate\Support\Facades\File;
 use Julidev\LaravelSsoKeycloak\Services\IAMService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -36,8 +35,8 @@ class IAMGuard implements Guard
         $this->request = $request;
         if (is_null($this->sessionPath)) {
             $this->sessionPath = Config::get('sso-web.session_impersonate.path');
-            if (!File::exists($this->sessionPath)) {
-                File::makeDirectory($this->sessionPath, 0755, true);
+            if (!file_exists($this->sessionPath)) {
+                mkdir($this->sessionPath, 0755, true);
             }
         }
     }
@@ -168,10 +167,9 @@ class IAMGuard implements Guard
     {
         $user_apps = config('sso-web.authentication_defaults.users_model')::where(config('sso-web.authentication_defaults.users_field_sso_id','user_id_sso'), $user->id)->first();
         if(empty($user_apps)){
-             if (Config::get('app.debug', false)) {
+            if (Config::get('app.debug', false)) {
                 throw new AuthorizationException('Pengguna belum terdaftar', 403);
             }
-
             return false;
         }
         Auth::guard(config('sso-web.auth.guard'))->login($user_apps, false);
@@ -184,15 +182,27 @@ class IAMGuard implements Guard
         }
         // Load additional session data from the file
         $session_file = "{$this->sessionPath}/{$this->sessionId}";
-        $session_impersonate = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
-
-        // Make additional session data available in the request
-        $this->request->attributes->set('session_impersonate', $session_impersonate);
-        $this->request->attributes->set('session_impersonate', session()->all());
-
+        if (file_exists($session_file)) {
+            $session_data = file_get_contents($session_file);
+            $session_impersonate = $session_data ? unserialize($session_data) : [];
+        }
+        
+        // Make additional session data available in the session
+        $_SESSION['session_impersonate'] = array_merge($session_impersonate, $_SESSION);
+        
         // Save additional session data back to the file
-        $session_impersonate = $this->request->attributes->get('session_impersonate');
-        File::put($session_file, serialize($session_impersonate));
+        $session_impersonate = $_SESSION['session_impersonate'];
+        file_put_contents($session_file, serialize($session_impersonate));
+
+        // $session_impersonate = File::exists($session_file) ? unserialize(File::get($session_file)) : [];
+
+        // // Make additional session data available in the request
+        // $this->request->attributes->set('session_impersonate', $session_impersonate);
+        // $this->request->attributes->set('session_impersonate', session()->all());
+
+        // // Save additional session data back to the file
+        // $session_impersonate = $this->request->attributes->get('session_impersonate');
+        // File::put($session_file, serialize($session_impersonate));
 
         return true;
     }
