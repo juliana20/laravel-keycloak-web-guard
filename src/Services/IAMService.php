@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Julidev\LaravelSsoKeycloak\Auth\AccessToken;
-use Illuminate\Support\Facades\File;
 use Julidev\LaravelSsoKeycloak\Exceptions\CallbackException;
 
 class IAMService
@@ -610,12 +609,12 @@ class IAMService
                     // menghapus file sesi tambahan jika ada
                     if ($sid) {
                         $session_file = "{$session_path}/{$sid}";
-                        if (File::exists($session_file)) {
-                            File::delete($session_file);
+                        if (file_exists($session_file)) {
+                            unlink($session_file);
                         }
                     }
                 }
-            } else { // signature invalid
+            } else {
                 throw new CallbackException('Invalid token signature');
             }
         
