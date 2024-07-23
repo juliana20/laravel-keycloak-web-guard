@@ -99,6 +99,7 @@ return [
         // User tabel dan model aplikasi laravel.
         'users_table' => 'users',
         'users_model' => App\User::class,
+        'users_field_sso_id' => 'user_id_sso'
     ],
 
     // Set path session tiruan SSO

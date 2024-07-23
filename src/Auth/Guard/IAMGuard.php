@@ -166,7 +166,7 @@ class IAMGuard implements Guard
 
     public function authenticateImpersonate($credentials, $user)
     {
-        $user_apps = config('sso-web.authentication_defaults.users_model')::where('user_id_sso', $user->id)->first();
+        $user_apps = config('sso-web.authentication_defaults.users_model')::where(config('sso-web.authentication_defaults.users_field_sso_id','user_id_sso'), $user->id)->first();
         if(empty($user_apps)){
              if (Config::get('app.debug', false)) {
                 throw new AuthorizationException('Pengguna belum terdaftar', 403);
