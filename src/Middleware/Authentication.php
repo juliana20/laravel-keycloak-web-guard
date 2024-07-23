@@ -5,7 +5,7 @@ namespace Julidev\LaravelSsoKeycloak\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
-class Authenticate
+class Authentication
 {
     /**
      * Handle an incoming request.

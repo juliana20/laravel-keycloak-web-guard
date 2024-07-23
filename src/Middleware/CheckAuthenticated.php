@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Julidev\LaravelSsoKeycloak\Services\IAMService;
 
-class IAMAuthenticated
+class CheckAuthenticated
 {
     protected $sessionPath;
 

@@ -2,7 +2,6 @@
 
 namespace Julidev\LaravelSsoKeycloak;
 
-use Julidev\LaravelSsoKeycloak\Middleware\Authenticate;
 use Julidev\LaravelSsoKeycloak\Services\IAMService;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
@@ -15,12 +14,11 @@ use Julidev\LaravelSsoKeycloak\Auth\Guard\IAMGuard;
 use Julidev\LaravelSsoKeycloak\Auth\IAMUserProvider;
 use Julidev\LaravelSsoKeycloak\Middleware\Role;
 use Illuminate\Support\Arr;
-use Julidev\LaravelSsoKeycloak\Middleware\IAMAuthenticated;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Logout;
 use Julidev\LaravelSsoKeycloak\Listeners\LogoutListener;
-use Illuminate\Http\Request;
-use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
+use Julidev\LaravelSsoKeycloak\Middleware\Authentication;
+use Julidev\LaravelSsoKeycloak\Middleware\CheckAuthenticated;
 
 class IAMGuardServiceProvider extends ServiceProvider
 {
@@ -77,14 +75,14 @@ class IAMGuardServiceProvider extends ServiceProvider
         $this->registerRoutes();
 
         // Middleware Group
-        $this->app['router']->middlewareGroup('sso-authenticated', [
+        $this->app['router']->middlewareGroup('sso-authentication', [
             StartSession::class,
-            Authenticate::class, // Custom Middleware
+            Authentication::class, // Custom Middleware
         ]);
 
         // Add Middleware "sso-role"
         $this->app['router']->aliasMiddleware('sso-role', Role::class);
-        $this->app['router']->aliasMiddleware('sso', IAMAuthenticated::class);
+        $this->app['router']->aliasMiddleware('sso', CheckAuthenticated::class);
 
         // Bind for client data
         $this->app->when(IAMService::class)->needs(ClientInterface::class)->give(function() {
@@ -137,16 +135,13 @@ class IAMGuardServiceProvider extends ServiceProvider
 
         // route tambahan untuk pengecekan apakah sudah login SSO IAM Badung
         if (! empty($routes['auth'])) {
-            $router->middleware('sso-authenticated')->get($routes['auth'], function(){
-                return redirect( Config::get('sso-web.redirect_url'));
+            $router->middleware('sso-authentication')->get($routes['auth'], function(){
+                return route('sso.callback');
             })->name('sso.auth');
         }
         // route tambahan untuk proses "Backchannel Logout" pada keycloak server
         if (! empty($routes['backchannel'])) {
-            $router->post($routes['backchannel'], function(Request $request){
-                $logout_token = $request->input('logout_token'); // get logout token from keycloak server
-                IAMBadung::logoutBackchannel($logout_token);
-            });
+            $router->post($routes['backchannel'], 'Julidev\LaravelSsoKeycloak\Controllers\AuthController@backchannel')->name('sso.backchannel');
         }
     }
 }

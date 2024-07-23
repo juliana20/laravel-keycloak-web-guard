@@ -84,4 +84,9 @@ class AuthController extends Controller
 
         return redirect(route('sso.login'));
     }
+
+    public function backchannel(Request $request){
+        $logout_token = $request->input('logout_token'); // get logout token from keycloak server
+        IAMBadung::logoutBackchannel($logout_token);
+    }
 }
