@@ -14,6 +14,7 @@ use Julidev\LaravelSsoKeycloak\Facades\IAMBadung;
 use Illuminate\Support\Facades\File;
 use Julidev\LaravelSsoKeycloak\Services\IAMService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class IAMGuard implements Guard
 {
@@ -168,7 +169,7 @@ class IAMGuard implements Guard
         $user_apps = config('sso-web.authentication_defaults.users_model')::where('user_id_sso', $user->id)->first();
         if(empty($user_apps)){
              if (Config::get('app.debug', false)) {
-                throw new CallbackException('[SSO Guard] users have not been mapped.');
+                throw new AuthorizationException('Pengguna belum terdaftar', 403);
             }
 
             return false;
