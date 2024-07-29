@@ -81,7 +81,7 @@ if (!function_exists('build_url')) {
  * @return void
  */
 if (!function_exists('log_exception')) {
-function log_exception(GuzzleException $e)
+    function log_exception(GuzzleException $e)
     {
         // Guzzle 7
         if (! method_exists($e, 'getResponse') || empty($e->getResponse())) {

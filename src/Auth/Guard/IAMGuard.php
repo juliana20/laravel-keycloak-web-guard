@@ -142,11 +142,9 @@ class IAMGuard implements Guard
         $user = IAMBadung::getUserProfile($credentials);
         if (empty($user)) {
             IAMBadung::forgetToken();
-
             // if (Config::get('app.debug', false)) {
             //     throw new CallbackException('User cannot be authenticated.');
             // }
-
             return false;
         }
 
