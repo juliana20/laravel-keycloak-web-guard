@@ -25,5 +25,7 @@ class Role
                 }
             }
         }
+
+        throw new AuthorizationException('Forbidden', 403);
     }
 }
