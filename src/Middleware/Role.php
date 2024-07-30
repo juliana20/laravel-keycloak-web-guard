@@ -17,19 +17,17 @@ class Role
      */
     public function handle($request, Closure $next, ...$guards)
     {
-        if(!auth()->check()){
+        if(!auth('iam')->check()){
             return $next($request);
         }
-        
-        if (auth('iam')->check()) {
-            $guards = array_unique(array_filter(explode('|', ($guards[0] ?? ''))));
-            foreach ($guards as $guard) {
-                if (auth('iam')->user()->hasRole($guard)) {
-                    return $next($request);
-                }
+
+        $guards = array_unique(array_filter(explode('|', ($guards[0] ?? ''))));
+        foreach ($guards as $guard) {
+            if (auth('iam')->user()->hasRole($guard)) {
+                return $next($request);
             }
         }
-
+        
         throw new AuthorizationException('Forbidden', 403);
     }
 }
