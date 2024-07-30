@@ -379,9 +379,9 @@ class IAMService
      */
     public function forgetToken()
     {
-        if (session()->has(self::SSO_SID)) {
-            session()->forget(self::SSO_SID);
-        }
+        // if (session()->has(self::SSO_SID)) {
+        //     session()->forget(self::SSO_SID);
+        // }
         session()->forget(self::SSO_SESSION);
         session()->save();
     }

@@ -17,6 +17,10 @@ class Role
      */
     public function handle($request, Closure $next, ...$guards)
     {
+        if(!auth()->check()){
+            return $next($request);
+        }
+        
         if (auth('iam')->check()) {
             $guards = array_unique(array_filter(explode('|', ($guards[0] ?? ''))));
             foreach ($guards as $guard) {
